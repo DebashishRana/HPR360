@@ -34,7 +34,7 @@ PeoplePay360 is implemented as a focused product layer on top of the existing **
 
 ---
 
-# 🎯 Problem Statement
+# 🎯 Problems to be fixed 
 
 HR and payroll operations are highly interconnected.
 
