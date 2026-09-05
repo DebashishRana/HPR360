@@ -1840,11 +1840,45 @@ def get_payrun_wizard_employees(filters: dict) -> dict:
 	if not employees:
 		return {"employees": [], "count": 0}
 
+	# Prefer employees with an Employment Contract for the period (+ optional structure)
+	from hrms.hr.doctype.employment_contract.employment_contract import get_applicable_contract
+
+	eligible = []
 	withheld_salaries = set(get_salary_withholdings(filters.start_date, filters.end_date, pluck="employee"))
 	for employee in employees:
+		contract = get_applicable_contract(
+			employee.employee,
+			on_date=filters.end_date,
+			salary_structure=filters.get("salary_structure"),
+		)
+		# If no contracts exist at all in the system, fall back to SSA-based eligibility
+		if filters.get("salary_structure") and not contract:
+			# Still allow SSA match when contracts are not used yet
+			has_ssa = frappe.db.exists(
+				"Salary Structure Assignment",
+				{
+					"employee": employee.employee,
+					"salary_structure": filters.salary_structure,
+					"docstatus": 1,
+					"from_date": ["<=", filters.end_date],
+				},
+			)
+			if not has_ssa:
+				continue
+		employee["employment_contract"] = contract.name if contract else ""
 		employee["is_salary_withheld"] = 1 if employee.employee in withheld_salaries else 0
+		eligible.append(employee)
 
-	return {"employees": employees, "count": len(employees)}
+	# If filtering by structure removed everyone but contracts aren't set up, keep original list
+	if filters.get("salary_structure") and not eligible:
+		any_contract = frappe.db.exists("Employment Contract", {"docstatus": 1})
+		if not any_contract:
+			for employee in employees:
+				employee["employment_contract"] = ""
+				employee["is_salary_withheld"] = 1 if employee.employee in withheld_salaries else 0
+			eligible = employees
+
+	return {"employees": eligible, "count": len(eligible)}
 
 
 @frappe.whitelist()
@@ -1856,7 +1890,7 @@ def get_payrun_processing_data(payroll_entry: str) -> dict:
 	salary_slips = frappe.get_all(
 		"Salary Slip",
 		filters={"payroll_entry": entry.name},
-		fields=["name", "docstatus", "employee", "employee_name", "net_pay"],
+		fields=["name", "docstatus", "employee", "employee_name", "net_pay", "bank_name", "bank_account_no"],
 		order_by="employee asc",
 	)
 	bank_entries = frappe.get_all(
@@ -1864,6 +1898,31 @@ def get_payrun_processing_data(payroll_entry: str) -> dict:
 		filters={"reference_type": "Payroll Entry", "reference_name": entry.name},
 		pluck="parent",
 		distinct=True,
+	)
+
+	missing_bank = []
+	for slip in salary_slips:
+		emp_bank = frappe.db.get_value(
+			"Employee", slip.employee, ["bank_name", "bank_ac_no"], as_dict=True
+		) or {}
+		if not (emp_bank.get("bank_name") and emp_bank.get("bank_ac_no")):
+			missing_bank.append(slip.employee_name or slip.employee)
+
+	# Duplicate payslips for same employee in this period
+	duplicates = frappe.db.sql(
+		"""
+		select employee, employee_name, count(*) as cnt
+		from `tabSalary Slip`
+		where docstatus < 2
+			and start_date = %s and end_date = %s
+			and employee in (
+				select employee from `tabPayroll Employee Detail` where parent=%s
+			)
+		group by employee
+		having count(*) > 1
+		""",
+		(entry.start_date, entry.end_date, entry.name),
+		as_dict=True,
 	)
 
 	return {
@@ -1876,7 +1935,40 @@ def get_payrun_processing_data(payroll_entry: str) -> dict:
 			"bank_entries": len(bank_entries),
 		},
 		"bank_entries": bank_entries,
+		"warnings": {
+			"missing_bank_details": missing_bank,
+			"duplicate_payslips": [
+				{"employee": d.employee_name or d.employee, "count": d.cnt} for d in duplicates
+			],
+		},
 	}
+
+
+@frappe.whitelist()
+def send_payrun_payslips(payroll_entry: str) -> dict:
+	"""Bulk email salary slips for a payrun."""
+	entry = frappe.get_doc("Payroll Entry", payroll_entry)
+	entry.check_permission("write")
+
+	slips = frappe.get_all(
+		"Salary Slip",
+		filters={"payroll_entry": entry.name, "docstatus": 1},
+		pluck="name",
+	)
+	if not slips:
+		frappe.throw(_("No submitted payslips found for this payrun."))
+
+	sent = 0
+	for name in slips:
+		slip = frappe.get_doc("Salary Slip", name)
+		try:
+			slip.email_salary_slip()
+			sent += 1
+		except Exception:
+			frappe.log_error(title=f"Failed emailing salary slip {name}")
+
+	return {"sent": sent, "total": len(slips)}
+
 
 
 @frappe.whitelist()

@@ -246,6 +246,14 @@ def get_custom_fields():
 				"in_list_view": 1,
 			},
 			{
+				"fieldname": "working_schedule",
+				"fieldtype": "Link",
+				"label": _("Working Schedule"),
+				"options": "Working Schedule",
+				"insert_after": "employment_type",
+				"in_list_view": 1,
+			},
+			{
 				"fieldname": "job_applicant",
 				"fieldtype": "Link",
 				"label": _("Job Applicant"),
@@ -353,6 +361,34 @@ def get_custom_fields():
 				"label": _("Payroll Cost Center"),
 				"options": "Cost Center",
 				"insert_after": "salary_cb",
+			},
+		],
+		"Payroll Entry": [
+			{
+				"fieldname": "salary_structure",
+				"fieldtype": "Link",
+				"label": _("Salary Structure"),
+				"options": "Salary Structure",
+				"insert_after": "payroll_frequency",
+				"in_list_view": 1,
+			},
+		],
+		"Salary Component": [
+			{
+				"fieldname": "salary_rule_category",
+				"fieldtype": "Select",
+				"label": _("Category"),
+				"options": "\nBasic\nAllowances\nGross\nDeductions\nNet",
+				"insert_after": "type",
+				"in_list_view": 1,
+				"in_standard_filter": 1,
+			},
+			{
+				"fieldname": "sequence_id",
+				"fieldtype": "Int",
+				"label": _("Sequence"),
+				"insert_after": "salary_rule_category",
+				"in_list_view": 1,
 			},
 		],
 		"Project": [

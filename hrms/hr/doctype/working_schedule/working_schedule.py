@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 import frappe
 from frappe import _
 from frappe.model.document import Document
-from frappe.utils import get_time
+from frappe.utils import flt, get_time
 
 
 class WorkingSchedule(Document):
@@ -13,11 +13,14 @@ class WorkingSchedule(Document):
 			frappe.throw(_("Add at least one working day."))
 
 		seen_days = set()
+		total_minutes = 0
 		for row in working_days:
 			if row.day in seen_days:
 				frappe.throw(_("{0} can only appear once in a schedule.").format(row.day))
 			seen_days.add(row.day)
-			self.validate_day(row)
+			total_minutes += self.validate_day(row)
+
+		self.weekly_hours = flt(total_minutes / 60.0, 2)
 
 	def validate_day(self, row):
 		if not row.start_time or not row.end_time:
@@ -34,7 +37,10 @@ class WorkingSchedule(Document):
 			end_dt += timedelta(days=1)
 
 		duration_minutes = int((end_dt - start_dt).total_seconds() / 60)
-		if row.break_minutes and row.break_minutes >= duration_minutes:
+		break_minutes = row.break_minutes or 0
+		if break_minutes >= duration_minutes:
 			frappe.throw(_("Break must be shorter than the shift duration for {0}.").format(row.day))
-		if row.break_minutes and row.break_minutes < 0:
+		if break_minutes < 0:
 			frappe.throw(_("Break cannot be negative for {0}.").format(row.day))
+
+		return duration_minutes - break_minutes

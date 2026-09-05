@@ -15,7 +15,7 @@ frappe.pages["working-schedule-setup"].on_page_load = function (wrapper) {
 
 function load_schedules(page) {
 	frappe.db.get_list("Working Schedule", {
-		fields: ["name", "schedule_name", "company", "is_active", "modified"],
+		fields: ["name", "schedule_name", "schedule_type", "company", "is_active", "weekly_hours", "modified"],
 		order_by: "modified desc",
 		limit_page_length: 100,
 	}).then((schedules) => render_schedules(page, schedules));
@@ -26,7 +26,7 @@ function render_schedules(page, schedules) {
 		page.main.html(`
 			<div class="text-center text-muted" style="padding: 100px 20px;">
 				<h3>${__("No working schedules yet")}</h3>
-				<p>${__("Create a schedule with manual working days, hours, and breaks.")}</p>
+				<p>${__("Create a schedule with working days, hours, and breaks. Weekly hours are calculated automatically.")}</p>
 				<button class="btn btn-primary create-working-schedule">${__("Create Schedule")}</button>
 			</div>
 		`);
@@ -37,7 +37,7 @@ function render_schedules(page, schedules) {
 	page.main.html(`
 		<div class="mb-4">
 			<h3>${__("Working Schedules")}</h3>
-			<p class="text-muted">${__("Define the hours and break duration for each working day.")}</p>
+			<p class="text-muted">${__("Name, type, and weekly hours for attendance and payroll expectations.")}</p>
 		</div>
 		<div class="row schedule-list"></div>
 	`);
@@ -53,7 +53,9 @@ function render_schedules(page, schedules) {
 							<h4 class="mb-2">${frappe.utils.escape_html(schedule.schedule_name || schedule.name)}</h4>
 							<span class="indicator-pill ${schedule.is_active ? "green" : "gray"}">${status}</span>
 						</div>
-						<div class="text-muted">${frappe.utils.escape_html(schedule.company || __("All companies"))}</div>
+						<div class="text-muted">${frappe.utils.escape_html(schedule.schedule_type || __("Standard"))}</div>
+						<div class="mt-2"><strong>${Number(schedule.weekly_hours || 0).toFixed(1)}</strong> ${__("hrs / week")}</div>
+						<div class="text-muted mt-1">${frappe.utils.escape_html(schedule.company || __("All companies"))}</div>
 					</div>
 				</div>
 			</div>
@@ -70,8 +72,10 @@ function open_schedule_dialog(page, schedule_name) {
 		size: "extra-large",
 		fields: [
 			{fieldname: "schedule_name", fieldtype: "Data", label: __("Schedule Name"), reqd: 1, read_only: Boolean(schedule_name)},
+			{fieldname: "schedule_type", fieldtype: "Select", label: __("Type"), options: "Standard\nFlexible\nPart-time\nShift", default: "Standard"},
 			{fieldname: "company", fieldtype: "Link", label: __("Company"), options: "Company"},
 			{fieldname: "is_active", fieldtype: "Check", label: __("Active"), default: 1},
+			{fieldname: "weekly_hours", fieldtype: "Float", label: __("Weekly Hours (auto)"), read_only: 1},
 			{fieldname: "description", fieldtype: "Small Text", label: __("Description")},
 			{fieldname: "working_days_html", fieldtype: "HTML"},
 		],
@@ -86,6 +90,7 @@ function open_schedule_dialog(page, schedule_name) {
 			const doc = {
 				doctype: "Working Schedule",
 				schedule_name: values.schedule_name,
+				schedule_type: values.schedule_type,
 				company: values.company,
 				is_active: values.is_active ? 1 : 0,
 				description: values.description,
@@ -108,7 +113,14 @@ function open_schedule_dialog(page, schedule_name) {
 	dialog.get_field("working_days_html").$wrapper.html(render_working_days());
 	if (schedule_name) {
 		frappe.db.get_doc("Working Schedule", schedule_name).then((doc) => {
-			dialog.set_values({schedule_name: doc.schedule_name, company: doc.company, is_active: doc.is_active, description: doc.description});
+			dialog.set_values({
+				schedule_name: doc.schedule_name,
+				schedule_type: doc.schedule_type,
+				company: doc.company,
+				is_active: doc.is_active,
+				weekly_hours: doc.weekly_hours,
+				description: doc.description,
+			});
 			set_working_days(dialog, doc.working_days || []);
 		});
 	}

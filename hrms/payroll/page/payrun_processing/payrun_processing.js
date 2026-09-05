@@ -57,6 +57,7 @@ function render_empty_state(page) {
 function render_payrun(page, data) {
 	const entry = data.payroll_entry;
 	const counts = data.counts;
+	const warnings = data.warnings || {};
 	const status = entry.status || __("Draft");
 	const status_class = {
 		Draft: "red",
@@ -66,52 +67,98 @@ function render_payrun(page, data) {
 		Cancelled: "red",
 	}[status] || "blue";
 
+	const missing_bank = warnings.missing_bank_details || [];
+	const duplicates = warnings.duplicate_payslips || [];
+
 	page.clear_inner_toolbar();
 	page.main.html(`
-		<div class="payrun-processing-header mb-4">
+		<div class="payrun-processing-header mb-4 d-flex justify-content-between align-items-start">
 			<div>
 				<h2 class="mb-1">${frappe.utils.escape_html(entry.name)}</h2>
-				<div class="text-muted">${frappe.utils.escape_html(entry.company || "")} - ${frappe.utils.escape_html(entry.start_date || "")} - ${frappe.utils.escape_html(entry.end_date || "")}</div>
+				<div class="text-muted">
+					${frappe.utils.escape_html(entry.company || "")}
+					· ${frappe.utils.escape_html(entry.start_date || "")} → ${frappe.utils.escape_html(entry.end_date || "")}
+					${entry.salary_structure ? ` · ${frappe.utils.escape_html(entry.salary_structure)}` : ""}
+				</div>
 			</div>
 			<span class="indicator-pill ${status_class}">${frappe.utils.escape_html(status)}</span>
 		</div>
 		<div class="row">
 			${render_stat(__("Employees"), counts.employees)}
-			${render_stat(__("Salary Slips"), counts.salary_slips)}
-			${render_stat(__("Submitted Slips"), counts.submitted_salary_slips)}
-			${render_stat(__("Bank Entries"), counts.bank_entries)}
+			${render_stat(__("Payslips"), counts.salary_slips)}
+			${render_stat(__("Validated"), counts.submitted_salary_slips)}
+			${render_stat(__("Paid / Bank"), counts.bank_entries)}
 		</div>
+		${render_warnings(missing_bank, duplicates)}
 		<div class="card mt-4">
 			<div class="card-body">
 				<h4>${__("Processing Checklist")}</h4>
 				${render_check("Employees selected", counts.employees > 0)}
-				${render_check("Salary slips computed", counts.salary_slips >= counts.employees && counts.employees > 0)}
-				${render_check("Salary slips validated and submitted", counts.submitted_salary_slips >= counts.employees && counts.employees > 0)}
-				${render_check("Payment entry created", counts.bank_entries > 0)}
+				${render_check("Payslips computed", counts.salary_slips >= counts.employees && counts.employees > 0)}
+				${render_check("Payslips validated", counts.submitted_salary_slips >= counts.employees && counts.employees > 0)}
+				${render_check("Marked paid", counts.bank_entries > 0)}
 				${entry.error_message ? `<div class="alert alert-danger mt-3">${frappe.utils.escape_html(entry.error_message)}</div>` : ""}
 			</div>
 		</div>
+		${render_slip_table(data.salary_slips || [])}
 	`);
 
-	const actions = page.add_inner_button(__("Open Payroll Entry"), () => {
+	page.add_inner_button(__("Open Payrun"), () => {
 		frappe.set_route("Form", "Payroll Entry", entry.name);
-	});
-	actions.addClass("btn-secondary");
+	}).addClass("btn-secondary");
 
 	if (!entry.salary_slips_created && entry.docstatus !== 2) {
-		page.add_inner_button(__("Compute Salary Slips"), () => compute_salary_slips(page, entry));
+		page.add_inner_button(__("Compute"), () => compute_salary_slips(page, entry));
 	}
 	if (entry.salary_slips_created && !entry.salary_slips_submitted && entry.docstatus !== 2) {
-		page.add_inner_button(__("Validate & Submit Slips"), () => {
+		page.add_inner_button(__("Validate"), () => {
 			frappe.confirm(
-				__("Submit salary slips and create the accrual journal entry?"),
+				__("Submit payslips and create the accrual journal entry?"),
 				() => run_doc_method(page, entry, "submit_salary_slips"),
 			);
 		});
 	}
 	if (entry.salary_slips_submitted && !counts.bank_entries && entry.docstatus !== 2) {
-		page.add_inner_button(__("Mark Paid / Make Bank Entry"), () => make_bank_entry(page, entry));
+		page.add_inner_button(__("Mark Paid"), () => make_bank_entry(page, entry));
 	}
+	if (counts.submitted_salary_slips > 0 && entry.docstatus !== 2) {
+		page.add_inner_button(__("Send Payslips"), () => send_payslips(page, entry));
+	}
+}
+
+function render_warnings(missing_bank, duplicates) {
+	if (!missing_bank.length && !duplicates.length) {
+		return `<div class="alert alert-success mt-3">${__("No payroll warnings detected.")}</div>`;
+	}
+	let html = `<div class="alert alert-warning mt-3"><strong>${__("Warnings before finalization")}</strong><ul class="mb-0 mt-2">`;
+	if (missing_bank.length) {
+		html += `<li>${__("Missing bank details")}: ${frappe.utils.escape_html(missing_bank.slice(0, 8).join(", "))}${missing_bank.length > 8 ? "…" : ""}</li>`;
+	}
+	if (duplicates.length) {
+		html += `<li>${__("Duplicate payslips")}: ${frappe.utils.escape_html(duplicates.map((d) => d.employee).join(", "))}</li>`;
+	}
+	html += `</ul></div>`;
+	return html;
+}
+
+function render_slip_table(slips) {
+	if (!slips.length) return "";
+	const rows = slips
+		.map(
+			(s) => `<tr>
+			<td><a href="/app/salary-slip/${encodeURIComponent(s.name)}">${frappe.utils.escape_html(s.name)}</a></td>
+			<td>${frappe.utils.escape_html(s.employee_name || s.employee || "")}</td>
+			<td>${s.docstatus === 1 ? __("Submitted") : s.docstatus === 2 ? __("Cancelled") : __("Draft")}</td>
+			<td class="text-right">${frappe.format(s.net_pay || 0, { fieldtype: "Currency" })}</td>
+		</tr>`
+		)
+		.join("");
+	return `<div class="card mt-4"><div class="card-body">
+		<h4>${__("Payslips")}</h4>
+		<table class="table table-bordered"><thead><tr>
+			<th>${__("Payslip")}</th><th>${__("Employee")}</th><th>${__("Status")}</th><th>${__("Net")}</th>
+		</tr></thead><tbody>${rows}</tbody></table>
+	</div></div>`;
 }
 
 function render_stat(label, value) {
@@ -137,7 +184,7 @@ function compute_salary_slips(page, entry) {
 			method: "frappe.client.submit",
 			args: { doc: { doctype: "Payroll Entry", name: entry.name } },
 			freeze: true,
-			freeze_message: __("Computing salary slips..."),
+			freeze_message: __("Computing payslips..."),
 		}).then(() => load_payrun(page, entry.name));
 	} else {
 		run_doc_method(page, entry, "create_salary_slips");
@@ -149,7 +196,6 @@ function make_bank_entry(page, entry) {
 		frappe.msgprint(__("Payment Account is mandatory. Set it on the Payroll Entry first."));
 		return;
 	}
-
 	frappe.call({
 		method: "run_doc_method",
 		args: {
@@ -161,4 +207,20 @@ function make_bank_entry(page, entry) {
 		freeze: true,
 		freeze_message: __("Creating payment entry..."),
 	}).then(() => load_payrun(page, entry.name));
+}
+
+function send_payslips(page, entry) {
+	frappe.confirm(__("Email all submitted payslips for this payrun?"), () => {
+		frappe.call({
+			method: "hrms.payroll.doctype.payroll_entry.payroll_entry.send_payrun_payslips",
+			args: { payroll_entry: entry.name },
+			freeze: true,
+			freeze_message: __("Sending payslips..."),
+		}).then((r) => {
+			frappe.show_alert({
+				message: __("Sent {0} of {1} payslips", [r.message.sent, r.message.total]),
+				indicator: "green",
+			});
+		});
+	});
 }

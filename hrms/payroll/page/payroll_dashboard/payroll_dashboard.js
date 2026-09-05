@@ -13,6 +13,18 @@ frappe.pages["payroll-dashboard"].on_page_load = function (wrapper) {
 		options: "Company",
 	});
 	page.add_field({
+		fieldname: "department",
+		fieldtype: "Link",
+		label: __("Department"),
+		options: "Department",
+	});
+	page.add_field({
+		fieldname: "employment_type",
+		fieldtype: "Link",
+		label: __("Employee Type"),
+		options: "Employment Type",
+	});
+	page.add_field({
 		fieldname: "from_date",
 		fieldtype: "Date",
 		label: __("From Date"),
@@ -42,6 +54,8 @@ function load_dashboard(page) {
 			from_date,
 			to_date,
 			company: page.fields_dict.company.get_value(),
+			department: page.fields_dict.department.get_value(),
+			employment_type: page.fields_dict.employment_type.get_value(),
 		},
 		freeze: true,
 		freeze_message: __("Refreshing payroll dashboard..."),
@@ -55,6 +69,7 @@ function render_dashboard(page, data) {
 	const warnings = data.warnings || {};
 	const currency = data.currency || "";
 	const total_warnings = Object.values(warnings).reduce((total, value) => total + Number(value || 0), 0);
+	const attendance = data.attendance_overview || {};
 
 	page.clear_inner_toolbar();
 	page.set_primary_action(__("Refresh"), () => load_dashboard(page));
@@ -66,39 +81,54 @@ function render_dashboard(page, data) {
 				<div>
 					<div class="payroll-dashboard-eyebrow">${__("PeoplePay360 Payroll")}</div>
 					<h1 class="payroll-dashboard-title">${__("Payroll overview")}</h1>
-					<p class="payroll-dashboard-subtitle">${__("A clear view of payroll cost, payrun progress, and operational readiness.")}</p>
+					<p class="payroll-dashboard-subtitle">${__("Live metrics from employees, contracts, attendance, time off, and payroll.")}</p>
 				</div>
-				<div class="payroll-dashboard-filter-note">${__("Period-filtered operational view")}</div>
 			</header>
 
 			<section class="payroll-dashboard-kpis">
-				${render_kpi(__("Net salary paid"), format_money(kpis.total_net_salary, currency), "teal")}
-				${render_kpi(__("Payslips generated"), kpis.payslips_generated, "navy")}
-				${render_kpi(__("Average salary"), format_money(kpis.average_salary, currency), "navy")}
-				${render_kpi(__("Approved time off"), kpis.approved_time_off, "amber")}
-				${render_kpi(__("Attendance health"), `${Number(kpis.attendance_health || 0).toFixed(1)}%`, "teal")}
+				${render_kpi(__("Total Net Salary Paid"), format_money(kpis.total_net_salary, currency), "teal")}
+				${render_kpi(__("Payslips Generated"), kpis.payslips_generated, "navy")}
+				${render_kpi(__("Average Salary"), format_money(kpis.average_salary, currency), "navy")}
+				${render_kpi(__("Approved Time Off"), kpis.approved_time_off, "amber")}
+				${render_kpi(__("Attendance Health"), `${Number(kpis.attendance_health || 0).toFixed(1)}%`, "teal")}
 			</section>
 
 			<section class="payroll-dashboard-grid">
 				<div class="payroll-dashboard-card">
-					<h4>${__("Salary cost trend")}</h4>
-					<div class="payroll-dashboard-card-caption">${__("Net salary across the selected period")}</div>
+					<h4>${__("Monthly Net Salary Trends")}</h4>
 					${render_trend(data.trend || [], currency)}
 				</div>
 				<div class="payroll-dashboard-card">
-					<h4>${__("Payrun status")}</h4>
-					<div class="payroll-dashboard-card-caption">${__("Batches requiring attention")}</div>
-					${render_status(data.status_breakdown || {})}
+					<h4>${__("Salary Cost by Department")}</h4>
+					${render_department(data.department_breakdown || [], currency)}
+				</div>
+			</section>
+
+			<section class="payroll-dashboard-grid mt-4">
+				<div class="payroll-dashboard-card">
+					<h4>${__("Attendance Overview")}</h4>
+					${render_kv(attendance)}
+				</div>
+				<div class="payroll-dashboard-card">
+					<h4>${__("Time Off")}</h4>
+					${render_kv({
+						[__("Approved")]: kpis.approved_time_off,
+						[__("Pending Requests")]: kpis.pending_time_off,
+						[__("Active Employees")]: kpis.active_employees,
+					})}
 				</div>
 			</section>
 
 			<section class="payroll-dashboard-card mt-4">
 				<div class="d-flex justify-content-between align-items-start">
-					<div><h4>${__("Operational alerts")}</h4><div class="payroll-dashboard-card-caption">${__("Resolve these items before finalizing payroll")}</div></div>
+					<div><h4>${__("Operational alerts")}</h4></div>
 					<span class="payroll-dashboard-pill">${total_warnings} ${__("open")}</span>
 				</div>
 				${render_warning(__("Queued payruns"), warnings.queued_payruns, "payrun-processing")}
 				${render_warning(__("Failed payruns"), warnings.failed_payruns, "Payroll Entry")}
+				${render_warning(__("Missing bank details"), warnings.missing_bank_details, "Employee")}
+				${render_warning(__("Duplicate payslips"), warnings.duplicate_payslips, "Salary Slip")}
+				${render_warning(__("Contract attention"), warnings.contract_attention, "Employment Contract")}
 				${render_warning(__("Unmarked attendance"), warnings.unmarked_attendance, "Attendance")}
 			</section>
 		</div>
@@ -128,10 +158,19 @@ function render_trend(trend, currency) {
 		</div>`).join("")}</div>`;
 }
 
-function render_status(statuses) {
-	const rows = Object.entries(statuses);
-	if (!rows.length) return `<div class="text-muted p-3">${__("No payruns in this period")}</div>`;
-	return rows.map(([status, count]) => `<div class="payroll-dashboard-status-row"><span>${frappe.utils.escape_html(status)}</span><span class="payroll-dashboard-pill">${Number(count) || 0}</span></div>`).join("");
+function render_department(rows, currency) {
+	if (!rows.length) return `<div class="text-muted p-3">${__("No department salary data")}</div>`;
+	return rows.map((row) => `
+		<div class="payroll-dashboard-status-row">
+			<span>${frappe.utils.escape_html(row.department)} · ${row.headcount} ${__("staff")}</span>
+			<span class="payroll-dashboard-pill">${format_money(row.salary, currency)}</span>
+		</div>`).join("");
+}
+
+function render_kv(obj) {
+	const rows = Object.entries(obj || {});
+	if (!rows.length) return `<div class="text-muted p-3">${__("No data")}</div>`;
+	return rows.map(([k, v]) => `<div class="payroll-dashboard-status-row"><span>${frappe.utils.escape_html(k)}</span><span class="payroll-dashboard-pill">${Number(v) || 0}</span></div>`).join("");
 }
 
 function render_warning(label, count, route) {

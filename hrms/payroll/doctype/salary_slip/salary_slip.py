@@ -899,6 +899,19 @@ class SalarySlip(TransactionBase):
 		return lwp, absent
 
 	def set_salary_structure_assignment(self):
+		# PeoplePay360: prefer Employment Contract for the payroll period when available
+		contract = None
+		if frappe.db.exists("DocType", "Employment Contract"):
+			from hrms.hr.doctype.employment_contract.employment_contract import get_applicable_contract
+
+			contract = get_applicable_contract(
+				self.employee,
+				on_date=self.actual_end_date or self.end_date or self.actual_start_date,
+				salary_structure=self.salary_structure,
+			)
+			if contract and not self.salary_structure:
+				self.salary_structure = contract.salary_structure
+
 		self._salary_structure_assignment = frappe.db.get_value(
 			"Salary Structure Assignment",
 			{
@@ -912,10 +925,26 @@ class SalarySlip(TransactionBase):
 			as_dict=True,
 		)
 
+		if not self._salary_structure_assignment and contract:
+			# Synthesize assignment context from employment contract wage/structure
+			self._salary_structure_assignment = frappe._dict(
+				{
+					"name": contract.name,
+					"employee": self.employee,
+					"salary_structure": contract.salary_structure,
+					"from_date": contract.start_date,
+					"base": contract.wage,
+					"variable": 0,
+					"currency": contract.currency,
+					"company": self.company,
+				}
+			)
+			self.salary_structure = contract.salary_structure
+
 		if not self._salary_structure_assignment:
 			frappe.throw(
 				_(
-					"Please assign a Salary Structure for Employee {0} applicable from or before {1} first"
+					"Please assign a Salary Structure or Employment Contract for Employee {0} applicable from or before {1} first"
 				).format(
 					frappe.bold(self.employee_name),
 					frappe.bold(formatdate(self.actual_start_date)),

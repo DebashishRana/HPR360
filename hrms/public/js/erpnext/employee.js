@@ -44,6 +44,18 @@ function get_assignment_actions() {
 			redirect: true,
 		},
 		{
+			label: __("Employment Contract"),
+			doctype: "Employment Contract",
+			prefill: (frm) => ({
+				employee: frm.doc.name,
+				company: frm.doc.company,
+				department: frm.doc.department,
+				designation: frm.doc.designation,
+				working_schedule: frm.doc.working_schedule,
+			}),
+			redirect: true,
+		},
+		{
 			label: __("Shift"),
 			doctype: "Shift Assignment",
 			prefill: (frm) => ({ employee: frm.doc.name, company: frm.doc.company }),

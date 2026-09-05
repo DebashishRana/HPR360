@@ -6,17 +6,19 @@
  "doctype": "DocType",
  "editable_grid": 1,
  "engine": "InnoDB",
- "field_order": ["schedule_name", "company", "is_active", "description", "working_days"],
+ "field_order": ["schedule_name", "schedule_type", "company", "is_active", "weekly_hours", "description", "working_days"],
  "fields": [
   {"fieldname": "schedule_name", "fieldtype": "Data", "in_list_view": 1, "label": "Schedule Name", "reqd": 1, "unique": 1},
+  {"default": "Standard", "fieldname": "schedule_type", "fieldtype": "Select", "in_list_view": 1, "label": "Type", "options": "Standard\nFlexible\nPart-time\nShift"},
   {"fieldname": "company", "fieldtype": "Link", "in_list_view": 1, "label": "Company", "options": "Company"},
   {"default": "1", "fieldname": "is_active", "fieldtype": "Check", "label": "Active"},
+  {"fieldname": "weekly_hours", "fieldtype": "Float", "in_list_view": 1, "label": "Weekly Hours", "read_only": 1, "precision": "2"},
   {"fieldname": "description", "fieldtype": "Small Text", "label": "Description"},
   {"fieldname": "working_days", "fieldtype": "Table", "label": "Working Days", "options": "Working Schedule Day", "reqd": 1}
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-09-05 00:00:00",
+ "modified": "2026-09-05 12:00:00",
  "modified_by": "Administrator",
  "module": "HR",
  "name": "Working Schedule",
@@ -24,6 +26,8 @@
  "permissions": [
   {"create": 1, "delete": 1, "read": 1, "role": "HR Manager", "write": 1},
   {"create": 1, "read": 1, "role": "HR User", "write": 1},
+  {"create": 1, "read": 1, "role": "HR Payroll Manager", "write": 1},
+  {"read": 1, "role": "HR Payroll User"},
   {"read": 1, "role": "Employee"}
  ],
  "row_format": "Dynamic",

@@ -1,7 +1,6 @@
 // Copyright (c) 2015, Frappe Technologies Pvt. Ltd. and Contributors
 // License: GNU General Public License v3. See license.txt
 
-// render
 frappe.listview_settings["Payroll Entry"] = {
 	has_indicator_for_draft: 1,
 	onload(listview) {
@@ -31,7 +30,7 @@ function open_payrun_wizard() {
 	};
 
 	const step1 = new frappe.ui.Dialog({
-		title: __("New Payroll Entry"),
+		title: __("New Payrun — Step 1: Scope & Period"),
 		size: "large",
 		fields: [
 			{
@@ -46,6 +45,16 @@ function open_payrun_wizard() {
 				},
 			},
 			{
+				fieldname: "salary_structure",
+				fieldtype: "Link",
+				label: __("Salary Structure"),
+				options: "Salary Structure",
+				reqd: 1,
+				get_query() {
+					return { filters: { docstatus: 1, is_active: "Yes" } };
+				},
+			},
+			{
 				fieldname: "posting_date",
 				fieldtype: "Date",
 				label: __("Posting Date"),
@@ -53,16 +62,12 @@ function open_payrun_wizard() {
 				default: frappe.datetime.nowdate(),
 			},
 			{
-				fieldname: "salary_slip_based_on_timesheet",
-				fieldtype: "Check",
-				label: __("Salary Slip Based on Timesheet"),
-				default: 0,
-			},
-			{
 				fieldname: "payroll_frequency",
 				fieldtype: "Select",
 				label: __("Payroll Frequency"),
 				options: "\nMonthly\nFortnightly\nBimonthly\nWeekly\nDaily",
+				reqd: 1,
+				default: "Monthly",
 				change() {
 					set_end_date(step1);
 				},
@@ -70,7 +75,7 @@ function open_payrun_wizard() {
 			{
 				fieldname: "start_date",
 				fieldtype: "Date",
-				label: __("Start Date"),
+				label: __("Period Start"),
 				reqd: 1,
 				change() {
 					set_end_date(step1);
@@ -79,14 +84,8 @@ function open_payrun_wizard() {
 			{
 				fieldname: "end_date",
 				fieldtype: "Date",
-				label: __("End Date"),
+				label: __("Period End"),
 				reqd: 1,
-			},
-			{
-				fieldname: "branch",
-				fieldtype: "Link",
-				label: __("Branch"),
-				options: "Branch",
 			},
 			{
 				fieldname: "department",
@@ -101,10 +100,10 @@ function open_payrun_wizard() {
 				options: "Designation",
 			},
 			{
-				fieldname: "grade",
+				fieldname: "branch",
 				fieldtype: "Link",
-				label: __("Grade"),
-				options: "Employee Grade",
+				label: __("Branch"),
+				options: "Branch",
 			},
 			{
 				fieldname: "currency",
@@ -120,17 +119,24 @@ function open_payrun_wizard() {
 				options: "Account",
 				reqd: 1,
 			},
+			{
+				fieldname: "salary_slip_based_on_timesheet",
+				fieldtype: "Check",
+				label: __("Salary Slip Based on Timesheet"),
+				default: 0,
+			},
 		],
 		primary_action_label: __("Continue"),
 		primary_action(values) {
+			if (!values.salary_structure) {
+				frappe.throw(__("Select a Salary Structure for this payrun."));
+			}
 			if (!values.salary_slip_based_on_timesheet && !values.payroll_frequency) {
 				frappe.throw(__("Payroll Frequency is required for period-based payruns."));
 			}
-
 			if (!values.start_date || !values.end_date) {
-				frappe.throw(__("Select both Start Date and End Date."));
+				frappe.throw(__("Select both Period Start and Period End."));
 			}
-
 			state.scope = values;
 			load_payrun_employees(state, step1);
 		},
@@ -165,10 +171,7 @@ function open_payrun_wizard() {
 
 		frappe.call({
 			method: "hrms.payroll.doctype.payroll_entry.payroll_entry.get_start_end_dates",
-			args: {
-				payroll_frequency,
-				start_date,
-			},
+			args: { payroll_frequency, start_date },
 		}).then((r) => {
 			if (r.message?.end_date) {
 				dialog.set_value("end_date", r.message.end_date);
@@ -179,25 +182,21 @@ function open_payrun_wizard() {
 	function load_payrun_employees(state, step1_dialog) {
 		frappe.call({
 			method: "hrms.payroll.doctype.payroll_entry.payroll_entry.get_payrun_wizard_employees",
-			args: {
-				filters: state.scope,
-			},
+			args: { filters: state.scope },
 			freeze: true,
 			freeze_message: __("Fetching eligible employees..."),
 		}).then((r) => {
 			state.employees = r.message?.employees || [];
-
 			if (!state.employees.length) {
 				frappe.msgprint({
 					title: __("No Employees Found"),
 					message: __(
-						"No eligible employees were found for the selected payroll scope and period."
+						"No eligible employees with an applicable Employment Contract were found for the selected structure and period."
 					),
 					indicator: "orange",
 				});
 				return;
 			}
-
 			step1_dialog.hide();
 			render_employee_step(state);
 		});
@@ -205,14 +204,9 @@ function open_payrun_wizard() {
 
 	function render_employee_step(state) {
 		const step2 = new frappe.ui.Dialog({
-			title: __("Select Employees"),
+			title: __("New Payrun — Step 2: Select Employees"),
 			size: "extra-large",
-			fields: [
-				{
-					fieldname: "employee_html",
-					fieldtype: "HTML",
-				},
-			],
+			fields: [{ fieldname: "employee_html", fieldtype: "HTML" }],
 			primary_action_label: __("Create Payrun"),
 			primary_action() {
 				const selected = get_selected_employees(step2);
@@ -235,6 +229,7 @@ function open_payrun_wizard() {
 				const employee_id = frappe.utils.escape_html(employee.employee || "");
 				const department = frappe.utils.escape_html(employee.department || "");
 				const designation = frappe.utils.escape_html(employee.designation || "");
+				const contract = frappe.utils.escape_html(employee.employment_contract || "");
 				return `
 					<tr>
 						<td class="text-center">
@@ -244,6 +239,7 @@ function open_payrun_wizard() {
 						<td>${employee_name}</td>
 						<td>${department}</td>
 						<td>${designation}</td>
+						<td>${contract}</td>
 						<td>${employee.is_salary_withheld ? __("Yes") : __("No")}</td>
 					</tr>
 				`;
@@ -253,12 +249,8 @@ function open_payrun_wizard() {
 		return `
 			<div class="d-flex flex-wrap align-items-center justify-content-between mb-3">
 				<div class="d-flex align-items-center gap-2">
-					<button type="button" class="btn btn-xs btn-secondary payrun-select-all">
-						${__("Select All")}
-					</button>
-					<button type="button" class="btn btn-xs btn-secondary payrun-deselect-all">
-						${__("Deselect All")}
-					</button>
+					<button type="button" class="btn btn-xs btn-secondary payrun-select-all">${__("Select All")}</button>
+					<button type="button" class="btn btn-xs btn-secondary payrun-deselect-all">${__("Deselect All")}</button>
 				</div>
 				<strong class="payrun-selection-summary" aria-live="polite"></strong>
 			</div>
@@ -270,7 +262,8 @@ function open_payrun_wizard() {
 							<th>${__("Employee")}</th>
 							<th>${__("Employee Name")}</th>
 							<th>${__("Department")}</th>
-							<th>${__("Designation")}</th>
+							<th>${__("Position")}</th>
+							<th>${__("Contract")}</th>
 							<th>${__("Withheld")}</th>
 						</tr>
 					</thead>
@@ -289,7 +282,6 @@ function open_payrun_wizard() {
 				__("{0} of {1} employees selected", [selected, total]),
 			);
 		};
-
 		$wrapper.on("click", ".payrun-select-all", () => {
 			$wrapper.find(".payrun-employee-select").prop("checked", true);
 			update_summary();
@@ -328,12 +320,12 @@ function open_payrun_wizard() {
 			posting_date: state.scope.posting_date,
 			salary_slip_based_on_timesheet: state.scope.salary_slip_based_on_timesheet ? 1 : 0,
 			payroll_frequency: state.scope.payroll_frequency,
+			salary_structure: state.scope.salary_structure,
 			start_date: state.scope.start_date,
 			end_date: state.scope.end_date,
 			branch: state.scope.branch,
 			department: state.scope.department,
 			designation: state.scope.designation,
-			grade: state.scope.grade,
 			currency: state.scope.currency,
 			payroll_payable_account: state.scope.payroll_payable_account,
 			employees,
@@ -341,14 +333,12 @@ function open_payrun_wizard() {
 
 		frappe.call({
 			method: "frappe.client.insert",
-			args: {
-				doc,
-			},
+			args: { doc },
 			freeze: true,
 			freeze_message: __("Creating Payrun..."),
 		}).then((r) => {
 			if (r.message?.name) {
-				frappe.set_route("Form", "Payroll Entry", r.message.name);
+				frappe.set_route("payrun-processing", r.message.name);
 			}
 		});
 	}

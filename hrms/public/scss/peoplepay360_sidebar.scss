@@ -1,0 +1,52 @@
+/* PeoplePay360 sidebar spacing & icon layout */
+.desk-sidebar .standard-sidebar-item,
+.sidebar-menu .standard-sidebar-item,
+[data-sidebar] .standard-sidebar-item,
+.workspace-sidebar .sidebar-item-container,
+.desk-sidebar .sidebar-item-container {
+	padding: 6px 10px !important;
+	margin: 2px 6px !important;
+	border-radius: 8px !important;
+	min-height: 34px;
+}
+
+.desk-sidebar .standard-sidebar-item .sidebar-item-icon,
+.workspace-sidebar .sidebar-item-icon,
+.desk-sidebar .sidebar-item-icon,
+[data-sidebar] .sidebar-item-icon {
+	width: 18px !important;
+	margin-right: 10px !important;
+	opacity: 0.85;
+	flex-shrink: 0;
+}
+
+.desk-sidebar .standard-sidebar-label,
+.workspace-sidebar .sidebar-item-label,
+.desk-sidebar .sidebar-item-label {
+	font-size: 13px !important;
+	letter-spacing: 0.01em;
+	line-height: 1.35;
+}
+
+.desk-sidebar .sidebar-section,
+.workspace-sidebar .sidebar-group-title,
+.desk-sidebar .section-label {
+	margin-top: 12px !important;
+	margin-bottom: 4px !important;
+	padding: 8px 12px 4px !important;
+	font-size: 11px !important;
+	font-weight: 600 !important;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+	opacity: 0.7;
+}
+
+.desk-sidebar .standard-sidebar-item:hover,
+.workspace-sidebar .sidebar-item-container:hover {
+	background: var(--subtle-fg, rgba(0, 0, 0, 0.04)) !important;
+}
+
+.desk-sidebar .standard-sidebar-item.selected,
+.workspace-sidebar .sidebar-item-container.selected {
+	background: var(--bg-color, rgba(0, 0, 0, 0.06)) !important;
+}

@@ -5,8 +5,11 @@
  "name": "payrun-processing",
  "page_name": "payrun-processing",
  "roles": [
+  {"role": "System Manager"},
   {"role": "HR User"},
   {"role": "HR Manager"},
+  {"role": "HR Payroll User"},
+  {"role": "HR Payroll Manager"},
   {"role": "Payroll Manager"}
  ],
  "standard": "Yes",

@@ -13,7 +13,7 @@
   {"child": 0, "icon": "house", "indent": 0, "label": "Home", "link_to": "/hr/roster", "link_type": "URL", "type": "Link"},
   {"child": 0, "icon": "calendar-clock", "indent": 0, "label": "My Attendance", "link_to": "Attendance", "link_type": "DocType", "type": "Link"},
   {"child": 0, "icon": "calendar-days", "indent": 0, "label": "My Time Off", "link_to": "Leave Application", "link_type": "DocType", "type": "Link"},
-  {"child": 0, "icon": "receipt", "indent": 0, "label": "My Payslips", "link_to": "Salary Slip", "link_type": "DocType", "type": "Link"}
+  {"child": 0, "icon": "file-text", "indent": 0, "label": "My Contract", "link_to": "Employment Contract", "link_type": "DocType", "type": "Link"}
  ],
  "standard": 1,
  "title": "PeoplePay360 Employee",
