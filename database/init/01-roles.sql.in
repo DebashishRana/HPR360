@@ -1,0 +1,29 @@
+-- This is a psql template, intentionally not named *.sql: the PostgreSQL
+-- container must not execute it directly. 00-roles.sh supplies its variables
+-- and executes it exactly once during fresh-volume initialization.
+-- Password values are never stored in this repository.
+\set ON_ERROR_STOP on
+
+SELECT format(
+  'CREATE ROLE peoplepay360_runtime LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION PASSWORD %L',
+  :'runtime_password'
+) WHERE NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'peoplepay360_runtime') \gexec
+
+SELECT format(
+  'CREATE ROLE peoplepay360_migrator LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION PASSWORD %L',
+  :'migration_password'
+) WHERE NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'peoplepay360_migrator') \gexec
+
+SELECT format(
+  'CREATE ROLE peoplepay360_analytics LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION PASSWORD %L',
+  :'analytics_password'
+) WHERE NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'peoplepay360_analytics') \gexec
+
+ALTER DATABASE peoplepay360 OWNER TO peoplepay360_migrator;
+REVOKE ALL ON DATABASE peoplepay360 FROM PUBLIC;
+GRANT CONNECT ON DATABASE peoplepay360 TO peoplepay360_runtime, peoplepay360_migrator, peoplepay360_analytics;
+
+SELECT 'CREATE DATABASE peoplepay360_test OWNER peoplepay360_migrator'
+WHERE NOT EXISTS (SELECT 1 FROM pg_database WHERE datname = 'peoplepay360_test') \gexec
+REVOKE ALL ON DATABASE peoplepay360_test FROM PUBLIC;
+GRANT CONNECT ON DATABASE peoplepay360_test TO peoplepay360_runtime, peoplepay360_migrator, peoplepay360_analytics;

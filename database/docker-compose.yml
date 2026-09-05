@@ -1,0 +1,46 @@
+services:
+  postgres:
+    image: postgres:17.10-alpine3.24
+    environment:
+      POSTGRES_DB: peoplepay360
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in database/.env}
+      PEOPLEPAY360_RUNTIME_PASSWORD: ${PEOPLEPAY360_RUNTIME_PASSWORD:?set PEOPLEPAY360_RUNTIME_PASSWORD in database/.env}
+      PEOPLEPAY360_MIGRATION_PASSWORD: ${PEOPLEPAY360_MIGRATION_PASSWORD:?set PEOPLEPAY360_MIGRATION_PASSWORD in database/.env}
+      PEOPLEPAY360_ANALYTICS_PASSWORD: ${PEOPLEPAY360_ANALYTICS_PASSWORD:?set PEOPLEPAY360_ANALYTICS_PASSWORD in database/.env}
+    ports:
+      - "5432:5432"
+    volumes:
+      - peoplepay360_pgdata:/var/lib/postgresql/data
+      - ./init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d peoplepay360"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  pgbouncer:
+    image: edoburu/pgbouncer:v1.24.1-p1
+    depends_on:
+      postgres:
+        condition: service_healthy
+    # Pass credentials from this file directly.  Do not use ${...} here:
+    # Compose gives variables already present in the invoking shell precedence
+    # over --env-file interpolation, which can make PgBouncer's userlist differ
+    # from the passwords persisted in PostgreSQL.
+    env_file:
+      - ./.env
+    ports:
+      - "6432:6432"
+    volumes:
+      - ./pgbouncer/pgbouncer.ini:/etc/pgbouncer/pgbouncer.ini:ro
+      - ./pgbouncer/entrypoint.sh:/usr/local/bin/peoplepay360-pgbouncer:ro
+    entrypoint: ["/bin/sh", "/usr/local/bin/peoplepay360-pgbouncer"]
+    healthcheck:
+      test: ["CMD-SHELL", "pgbouncer -V"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  peoplepay360_pgdata:
