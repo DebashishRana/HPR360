@@ -1,8 +1,9 @@
-#!bin/bash
+#!/bin/bash
 
 if [ -d "/home/frappe/frappe-bench/apps/frappe" ]; then
     echo "Bench already exists, skipping init"
     cd frappe-bench
+    sed -i -E 's|^web: bench serve.*|web: bench serve --host 0.0.0.0 --port 8000|' ./Procfile
     bench start
 else
     echo "Creating new bench..."
@@ -23,6 +24,7 @@ bench set-redis-socketio-host redis://redis:6379
 # Remove redis, watch from Procfile
 sed -i '/redis/d' ./Procfile
 sed -i '/watch/d' ./Procfile
+sed -i -E 's|^web: bench serve.*|web: bench serve --host 0.0.0.0 --port 8000|' ./Procfile
 
 bench get-app erpnext
 bench get-app hrms

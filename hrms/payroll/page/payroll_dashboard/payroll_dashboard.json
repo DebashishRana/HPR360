@@ -1,0 +1,17 @@
+{
+ "content": null,
+ "doctype": "Page",
+ "module": "Payroll",
+ "name": "payroll-dashboard",
+ "page_name": "payroll-dashboard",
+ "roles": [
+  {"role": "HR User"},
+  {"role": "HR Manager"},
+  {"role": "HR Payroll User"},
+  {"role": "HR Payroll Manager"},
+  {"role": "System Manager"}
+ ],
+ "standard": "Yes",
+ "style": null,
+ "title": "Payroll Dashboard"
+}

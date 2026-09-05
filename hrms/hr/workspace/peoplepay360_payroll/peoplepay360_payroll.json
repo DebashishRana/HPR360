@@ -1,0 +1,24 @@
+{
+ "app": "hrms",
+ "content": "[]",
+ "doctype": "Workspace",
+ "icon": "wallet",
+ "label": "PeoplePay360 Payroll",
+ "module": "HR",
+ "name": "PeoplePay360 Payroll",
+ "owner": "Administrator",
+ "public": 0,
+ "roles": [{"role": "HR Payroll User"}, {"role": "HR Payroll Manager"}],
+ "sidebar_items": [
+  {"child": 0, "icon": "users", "indent": 0, "label": "Employees", "link_to": "Employee", "link_type": "DocType", "type": "Link"},
+  {"child": 0, "icon": "calendar-days", "indent": 0, "label": "Time Off", "link_to": "Leaves", "link_type": "Workspace", "type": "Link"},
+  {"child": 0, "icon": "landmark", "indent": 0, "label": "Payruns", "link_to": "Payroll Entry", "link_type": "DocType", "type": "Link"},
+  {"child": 0, "icon": "list-checks", "indent": 0, "label": "Payrun Processing", "link_to": "payrun-processing", "link_type": "Page", "type": "Link"},
+  {"child": 0, "icon": "receipt", "indent": 0, "label": "Payslips", "link_to": "Salary Slip", "link_type": "DocType", "type": "Link"},
+  {"child": 0, "icon": "layers", "indent": 0, "label": "Salary Structures", "link_to": "Salary Structure", "link_type": "DocType", "type": "Link"},
+  {"child": 0, "icon": "bar-chart-3", "indent": 0, "label": "Payroll Dashboard", "link_to": "payroll-dashboard", "link_type": "Page", "type": "Link"}
+ ],
+ "standard": 1,
+ "title": "PeoplePay360 Payroll",
+ "type": "Workspace"
+}

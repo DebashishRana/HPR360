@@ -11,6 +11,10 @@ const HR_WORKSPACES = new Set([
 	"Recruitment",
 	"Tenure",
 	"Payroll",
+	"PeoplePay360",
+	"PeoplePay360 Employee",
+	"PeoplePay360 HR",
+	"PeoplePay360 Payroll",
 ]);
 
 // Key HR doctypes worth tracking navigation into. Kept explicit so we only ever

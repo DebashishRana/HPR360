@@ -1820,6 +1820,66 @@ def get_employee_list(
 
 
 @frappe.whitelist()
+def get_payrun_wizard_employees(filters: dict) -> dict:
+	filters = frappe._dict(filters)
+
+	if not filters.company:
+		frappe.throw(_("Company is required."))
+	if not filters.start_date or not filters.end_date:
+		frappe.throw(_("Start Date and End Date are required."))
+	if not filters.salary_slip_based_on_timesheet and not filters.payroll_frequency:
+		frappe.throw(_("Select Payroll Frequency."))
+
+	employees = get_employee_list(
+		filters,
+		fields=["employee", "employee_name", "department", "designation"],
+		as_dict=True,
+		ignore_match_conditions=True,
+	)
+
+	if not employees:
+		return {"employees": [], "count": 0}
+
+	withheld_salaries = set(get_salary_withholdings(filters.start_date, filters.end_date, pluck="employee"))
+	for employee in employees:
+		employee["is_salary_withheld"] = 1 if employee.employee in withheld_salaries else 0
+
+	return {"employees": employees, "count": len(employees)}
+
+
+@frappe.whitelist()
+def get_payrun_processing_data(payroll_entry: str) -> dict:
+	"""Return the processing state used by the dedicated payrun screen."""
+	entry = frappe.get_doc("Payroll Entry", payroll_entry)
+	entry.check_permission("read")
+
+	salary_slips = frappe.get_all(
+		"Salary Slip",
+		filters={"payroll_entry": entry.name},
+		fields=["name", "docstatus", "employee", "employee_name", "net_pay"],
+		order_by="employee asc",
+	)
+	bank_entries = frappe.get_all(
+		"Journal Entry Account",
+		filters={"reference_type": "Payroll Entry", "reference_name": entry.name},
+		pluck="parent",
+		distinct=True,
+	)
+
+	return {
+		"payroll_entry": entry.as_dict(no_nulls=True),
+		"salary_slips": salary_slips,
+		"counts": {
+			"employees": len(entry.employees),
+			"salary_slips": len(salary_slips),
+			"submitted_salary_slips": sum(slip.docstatus == 1 for slip in salary_slips),
+			"bank_entries": len(bank_entries),
+		},
+		"bank_entries": bank_entries,
+	}
+
+
+@frappe.whitelist()
 @frappe.validate_and_sanitize_search_inputs
 def employee_query(
 	doctype: str, txt: str, searchfield: str, start: int, page_len: int, filters: dict
