@@ -1,0 +1,98 @@
+.peoplepay360-employee-view {
+	--pp360-ink: #18212f;
+	--pp360-muted: #6b7280;
+	--pp360-line: #e8ebef;
+	--pp360-surface: #ffffff;
+	--pp360-canvas: #f6f8fa;
+	background: var(--pp360-canvas);
+}
+
+.peoplepay360-employee-view .page-head,
+.peoplepay360-employee-view .layout-main-section {
+		background: transparent;
+}
+
+.peoplepay360-employee-view .layout-main-section {
+		border: 1px solid var(--pp360-line);
+		border-radius: 16px;
+		background: var(--pp360-surface);
+		box-shadow: 0 12px 32px rgba(24, 33, 47, 0.05);
+		overflow: hidden;
+}
+
+.peoplepay360-employee-view .list-row-container {
+		border-bottom: 1px solid var(--pp360-line);
+		transition: background 160ms ease, transform 160ms ease;
+}
+
+.peoplepay360-employee-view .list-row-container:hover {
+		background: #fbfcfd;
+}
+
+.peoplepay360-employee-view .list-row-head {
+		background: #fafbfc;
+		color: var(--pp360-muted);
+		font-size: 11px;
+		font-weight: 600;
+		letter-spacing: 0.06em;
+		text-transform: uppercase;
+}
+
+.peoplepay360-employee-view .list-row {
+		min-height: 64px;
+		color: var(--pp360-ink);
+	}
+
+.peoplepay360-employee-view .list-row-col {
+		font-size: 13px;
+}
+
+.peoplepay360-employee-view .list-row-col .indicator-pill {
+		border-radius: 999px;
+		font-size: 11px;
+		font-weight: 600;
+		padding: 4px 9px;
+	}
+
+.peoplepay360-employee-view .kanban {
+		gap: 14px;
+		padding: 18px;
+		background: var(--pp360-canvas);
+}
+
+.peoplepay360-employee-view .kanban-column {
+		border: 1px solid var(--pp360-line);
+		border-radius: 14px;
+		background: #f1f3f5;
+		box-shadow: none;
+	}
+
+.peoplepay360-employee-view .kanban-column-header {
+		padding: 14px 14px 10px;
+		font-size: 12px;
+		font-weight: 600;
+		letter-spacing: 0.02em;
+	}
+
+.peoplepay360-employee-view .kanban-card {
+		border: 1px solid var(--pp360-line);
+		border-radius: 11px;
+		background: var(--pp360-surface);
+		box-shadow: 0 4px 12px rgba(24, 33, 47, 0.06);
+		transition: transform 160ms ease, box-shadow 160ms ease;
+	}
+
+.peoplepay360-employee-view .kanban-card:hover {
+		transform: translateY(-2px);
+		box-shadow: 0 10px 20px rgba(24, 33, 47, 0.1);
+}
+
+@media (max-width: 768px) {
+	.peoplepay360-employee-view .layout-main-section {
+		border-radius: 10px;
+	}
+
+	.peoplepay360-employee-view .list-row-col {
+		font-size: 12px;
+	}
+}

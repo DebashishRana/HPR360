@@ -1,33 +1,14 @@
 frappe.pages["payroll-dashboard"].on_page_load = function (wrapper) {
-	const page = frappe.ui.make_app_page({
-		parent: wrapper,
-		title: __("Payroll Dashboard"),
-		single_column: true,
-	});
-
+	const page = frappe.ui.make_app_page({ parent: wrapper, title: __("Payroll Dashboard"), single_column: true });
 	page.main.addClass("payroll-dashboard-page");
-	page.add_field({
-		fieldname: "company",
-		fieldtype: "Link",
-		label: __("Company"),
-		options: "Company",
-	});
-	page.add_field({
-		fieldname: "from_date",
-		fieldtype: "Date",
-		label: __("From Date"),
-		default: frappe.datetime.month_start(),
-	});
-	page.add_field({
-		fieldname: "to_date",
-		fieldtype: "Date",
-		label: __("To Date"),
-		default: frappe.datetime.month_end(),
-	});
+	page.add_field({ fieldname: "company", fieldtype: "Link", label: __("Company"), options: "Company" });
+	page.add_field({ fieldname: "department", fieldtype: "Link", label: __("Department"), options: "Department" });
+	page.add_field({ fieldname: "employee_type", fieldtype: "Link", label: __("Employee Type"), options: "Employee Type" });
+	page.add_field({ fieldname: "from_date", fieldtype: "Date", label: __("From Date"), default: frappe.datetime.month_start() });
+	page.add_field({ fieldname: "to_date", fieldtype: "Date", label: __("To Date"), default: frappe.datetime.month_end() });
 	page.set_primary_action(__("Refresh"), () => load_dashboard(page));
-	page.add_inner_button(__("New Payrun"), () => frappe.set_route("List", "Payroll Entry"));
+	page.add_inner_button(__("Start Pay Run Wizard"), () => frappe.set_route("List", "Payroll Entry"));
 	page.add_inner_button(__("Payrun Processing"), () => frappe.set_route("payrun-processing"));
-
 	$(wrapper).on("show", () => load_dashboard(page));
 };
 
@@ -35,111 +16,30 @@ function load_dashboard(page) {
 	const from_date = page.fields_dict.from_date.get_value();
 	const to_date = page.fields_dict.to_date.get_value();
 	if (!from_date || !to_date) return;
-
-	frappe.call({
-		method: "hrms.payroll.page.payroll_dashboard.payroll_dashboard.get_payroll_dashboard_data",
-		args: {
-			from_date,
-			to_date,
-			company: page.fields_dict.company.get_value(),
-		},
-		freeze: true,
-		freeze_message: __("Refreshing payroll dashboard..."),
-	}).then((r) => {
-		if (r.message) render_dashboard(page, r.message);
-	});
+	frappe.call({ method: "hrms.payroll.page.payroll_dashboard.payroll_dashboard.get_payroll_dashboard_data", args: { from_date, to_date, company: page.fields_dict.company.get_value(), department: page.fields_dict.department.get_value(), employee_type: page.fields_dict.employee_type.get_value() }, freeze: true, freeze_message: __("Refreshing payroll dashboard...") }).then((r) => r.message && render_dashboard(page, r.message));
 }
 
 function render_dashboard(page, data) {
-	const kpis = data.kpis || {};
-	const warnings = data.warnings || {};
-	const currency = data.currency || "";
-	const total_warnings = Object.values(warnings).reduce((total, value) => total + Number(value || 0), 0);
-
-	page.clear_inner_toolbar();
-	page.set_primary_action(__("Refresh"), () => load_dashboard(page));
-	page.add_inner_button(__("New Payrun"), () => frappe.set_route("List", "Payroll Entry"));
-	page.add_inner_button(__("Payrun Processing"), () => frappe.set_route("payrun-processing"));
+	const k = data.kpis || {}, w = data.warnings || {}, a = data.attendance || {}, t = data.time_off || {};
+	const totalWarnings = Object.values(w).reduce((sum, value) => sum + Number(value || 0), 0);
 	page.main.html(`
 		<div class="payroll-dashboard-shell">
-			<header class="payroll-dashboard-header">
-				<div>
-					<div class="payroll-dashboard-eyebrow">${__("PeoplePay360 Payroll")}</div>
-					<h1 class="payroll-dashboard-title">${__("Payroll overview")}</h1>
-					<p class="payroll-dashboard-subtitle">${__("A clear view of payroll cost, payrun progress, and operational readiness.")}</p>
-				</div>
-				<div class="payroll-dashboard-filter-note">${__("Period-filtered operational view")}</div>
-			</header>
-
-			<section class="payroll-dashboard-kpis">
-				${render_kpi(__("Net salary paid"), format_money(kpis.total_net_salary, currency), "teal")}
-				${render_kpi(__("Payslips generated"), kpis.payslips_generated, "navy")}
-				${render_kpi(__("Average salary"), format_money(kpis.average_salary, currency), "navy")}
-				${render_kpi(__("Approved time off"), kpis.approved_time_off, "amber")}
-				${render_kpi(__("Attendance health"), `${Number(kpis.attendance_health || 0).toFixed(1)}%`, "teal")}
-			</section>
-
-			<section class="payroll-dashboard-grid">
-				<div class="payroll-dashboard-card">
-					<h4>${__("Salary cost trend")}</h4>
-					<div class="payroll-dashboard-card-caption">${__("Net salary across the selected period")}</div>
-					${render_trend(data.trend || [], currency)}
-				</div>
-				<div class="payroll-dashboard-card">
-					<h4>${__("Payrun status")}</h4>
-					<div class="payroll-dashboard-card-caption">${__("Batches requiring attention")}</div>
-					${render_status(data.status_breakdown || {})}
-				</div>
-			</section>
-
-			<section class="payroll-dashboard-card mt-4">
-				<div class="d-flex justify-content-between align-items-start">
-					<div><h4>${__("Operational alerts")}</h4><div class="payroll-dashboard-card-caption">${__("Resolve these items before finalizing payroll")}</div></div>
-					<span class="payroll-dashboard-pill">${total_warnings} ${__("open")}</span>
-				</div>
-				${render_warning(__("Queued payruns"), warnings.queued_payruns, "payrun-processing")}
-				${render_warning(__("Failed payruns"), warnings.failed_payruns, "Payroll Entry")}
-				${render_warning(__("Unmarked attendance"), warnings.unmarked_attendance, "Attendance")}
-			</section>
-		</div>
-	`);
-	page.main.find("[data-route]").on("click", function (event) {
-		event.preventDefault();
-		const route = $(this).attr("data-route");
-		if (route === "payrun-processing") {
-			frappe.set_route(route);
-		} else {
-			frappe.set_route("List", route);
-		}
-	});
+			<header class="payroll-dashboard-header"><div><div class="payroll-dashboard-eyebrow">${__("PeoplePay360 Payroll")}</div><h1 class="payroll-dashboard-title">${__("Payroll overview")}</h1><p class="payroll-dashboard-subtitle">${__("Understand pay, staffing impact, leave patterns, and operational readiness.")}</p></div><span class="payroll-dashboard-filter-note">${__("Live data")}</span></header>
+			<section class="payroll-dashboard-kpis">${kpi(__("Total Net Salary Paid"), money(k.total_net_salary, data.currency), "teal")}${kpi(__("Payslips Generated"), k.payslips_generated, "navy")}${kpi(__("Average Salary"), money(k.average_salary, data.currency), "navy")}${kpi(__("Approved Time Off"), k.approved_time_off, "amber")}${kpi(__("Attendance Health"), `${Number(k.attendance_health || 0).toFixed(1)}%`, "teal")}</section>
+			<section class="payroll-dashboard-grid payroll-dashboard-grid-three"><div class="payroll-dashboard-card"><h4>${__("Salary Cost by Department")}</h4><div class="payroll-dashboard-card-caption">${__("Posted payslips by department")}</div>${departmentBars(data.salary_by_department || [], data.currency)}</div><div class="payroll-dashboard-card"><h4>${__("Monthly Net Salary Trend")}</h4><div class="payroll-dashboard-card-caption">${__("Historical posted payroll cost")}</div>${trend(data.trend || [], data.currency)}</div><div class="payroll-dashboard-card"><h4>${__("Payslip Status and Payroll Alerts")}</h4><div class="payroll-dashboard-card-caption">${__("Validation and operational readiness")}</div>${statusPanel(data.status_breakdown || {}, w)}</div></section>
+			<section class="payroll-dashboard-grid payroll-dashboard-section"><div class="payroll-dashboard-card"><div class="dashboard-card-title"><div><h4>${__("Attendance Overview")}</h4><div class="payroll-dashboard-card-caption">${__("Coverage, presence, exceptions, and overtime")}</div></div><strong>${Number(a.coverage || 0).toFixed(1)}%</strong></div>${overviewRow(__("Present"), a.breakdown?.Present || 0, "green")}${overviewRow(__("Late"), a.late || 0, "amber")}${overviewRow(__("Absent"), a.breakdown?.Absent || 0, "red")}${overviewRow(__("Overtime hours"), Number(a.overtime || 0).toFixed(1), "blue")}${overviewRow(__("Early / missing checkout"), a.early_exit || 0, "orange")}</div><div class="payroll-dashboard-card"><div class="dashboard-card-title"><div><h4>${__("Time Off Overview")}</h4><div class="payroll-dashboard-card-caption">${__("Approved days, requests, and balances")}</div></div><strong>${t.approved_days || 0} ${__("days")}</strong></div>${overviewRow(__("Pending requests"), t.pending_requests || 0, "amber")}${(t.leave_balances || []).map((row) => overviewRow(row.leave_type, Number(row.available || 0).toFixed(1), "teal")).join("") || `<div class="text-muted p-2">${__("No leave balances found")}</div>`}</div></section>
+			<section class="payroll-dashboard-card payroll-dashboard-section"><div class="dashboard-card-title"><div><h4>${__("Operational Alerts")}</h4><div class="payroll-dashboard-card-caption">${__("Items requiring review before payroll close")}</div></div><span class="payroll-dashboard-pill">${totalWarnings} ${__("open")}</span></div>${warning(__("Queued payruns"), w.queued_payruns, "payrun-processing")}${warning(__("Failed payruns"), w.failed_payruns, "Payroll Entry")}${warning(__("Missing employee information"), w.missing_employee_info, "Employee")}${warning(__("Missing attendance"), w.unmarked_attendance, "Attendance")}${warning(__("Duplicate payslips"), w.duplicate_payslips, "Salary Slip")}${warning(__("Contracts expiring within 30 days"), w.contract_attention, "Employment Contract")}</section>
+			<section class="payroll-dashboard-card payroll-dashboard-section"><div class="dashboard-card-title"><div><h4>${__("Employee Pay Details")}</h4><div class="payroll-dashboard-card-caption">${__("Latest posted payslip in the selected period")}</div></div></div>${payTable(data.employee_pay || [], data.currency)}</section>
+		</div>`);
+	page.main.find("[data-route]").on("click", function (e) { e.preventDefault(); const route = $(this).data("route"); route === "payrun-processing" ? frappe.set_route(route) : frappe.set_route("List", route); });
 }
 
-function render_kpi(label, value, accent) {
-	return `<div class="payroll-dashboard-card payroll-dashboard-kpi payroll-dashboard-kpi-${accent}"><div class="payroll-dashboard-kpi-label">${label}</div><div class="payroll-dashboard-kpi-value">${value}</div></div>`;
-}
-
-function render_trend(trend, currency) {
-	if (!trend.length) return `<div class="text-muted text-center p-5">${__("No posted salary slips for this period")}</div>`;
-	const max = Math.max(...trend.map((row) => Number(row.value) || 0), 1);
-	return `<div class="payroll-dashboard-chart">${trend.map((row) => `
-		<div class="payroll-dashboard-bar-wrap" title="${format_money(row.value, currency)}">
-			<div class="payroll-dashboard-bar" style="height: ${Math.max((Number(row.value) / max) * 100, 3)}%"></div>
-			<div class="payroll-dashboard-bar-label">${frappe.utils.escape_html(row.month.slice(5))}</div>
-		</div>`).join("")}</div>`;
-}
-
-function render_status(statuses) {
-	const rows = Object.entries(statuses);
-	if (!rows.length) return `<div class="text-muted p-3">${__("No payruns in this period")}</div>`;
-	return rows.map(([status, count]) => `<div class="payroll-dashboard-status-row"><span>${frappe.utils.escape_html(status)}</span><span class="payroll-dashboard-pill">${Number(count) || 0}</span></div>`).join("");
-}
-
-function render_warning(label, count, route) {
-	const value = Number(count) || 0;
-	return `<div class="payroll-dashboard-warning-row"><span>${label}</span>${value ? `<a href="#" data-route="${route}">${value} ${__("review")}</a>` : `<span class="text-muted">${__("Clear")}</span>`}</div>`;
-}
-
-function format_money(value, currency) {
-	const formatted = Number(value || 0).toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 0});
-	return currency ? `${frappe.utils.escape_html(currency)} ${formatted}` : formatted;
-}
+function kpi(label, value, accent) { return `<div class="payroll-dashboard-card payroll-dashboard-kpi payroll-dashboard-kpi-${accent}"><div class="payroll-dashboard-kpi-label">${label}</div><div class="payroll-dashboard-kpi-value">${value}</div></div>`; }
+function money(value, currency) { const formatted = Number(value || 0).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 }); return currency ? `${frappe.utils.escape_html(currency)} ${formatted}` : formatted; }
+function trend(rows, currency) { if (!rows.length) return `<div class="text-muted text-center p-5">${__("No posted salary slips for this period")}</div>`; const max = Math.max(...rows.map((r) => Number(r.value) || 0), 1); return `<div class="payroll-dashboard-chart">${rows.map((r) => `<div class="payroll-dashboard-bar-wrap" title="${money(r.value, currency)}"><div class="payroll-dashboard-bar" style="height:${Math.max(Number(r.value) / max * 100, 3)}%"></div><div class="payroll-dashboard-bar-label">${frappe.utils.escape_html(r.month.slice(5))}</div></div>`).join("")}</div>`; }
+function departments(rows, currency) { if (!rows.length) return `<div class="text-muted p-4">${__("No department data")}</div>`; return rows.map((r) => `<div class="department-row"><span>${frappe.utils.escape_html(r.department)}<small>${r.headcount} ${__("employees")}</small></span><strong>${money(r.salary, currency)}</strong></div>`).join(""); }
+function departmentBars(rows, currency) { if (!rows.length) return `<div class="text-muted p-4">${__("No department data")}</div>`; const max = Math.max(...rows.map((r) => Number(r.value) || 0), 1); return `<div class="department-bars">${rows.slice(0, 8).map((r) => `<div class="department-bar-row"><span>${frappe.utils.escape_html(r.department)}</span><div><i style="width:${Math.max(Number(r.value) / max * 100, 3)}%"></i></div><strong>${money(r.value, currency)}</strong></div>`).join("")}</div>`; }
+function statusPanel(statuses, warnings) { const rows = Object.entries(statuses); const alerts = [[__("Queued payruns"), warnings.queued_payruns], [__("Failed payruns"), warnings.failed_payruns], [__("Missing attendance"), warnings.unmarked_attendance], [__("Duplicate payslips"), warnings.duplicate_payslips], [__("Missing employee information"), warnings.missing_employee_info]]; return `<div class="status-panel">${rows.map(([status, count]) => `<div class="status-row"><span>${frappe.utils.escape_html(status)}</span><strong>${Number(count) || 0}</strong></div>`).join("") || `<div class="text-muted">${__("No payslips in this period")}</div>`}<div class="status-alerts"><b>${__("Current alerts")}</b>${alerts.map(([label, count]) => `<div><span class="overview-dot ${count ? "red" : "green"}"></span>${label}<strong>${Number(count) || 0}</strong></div>`).join("")}</div></div>`; }
+function overviewRow(label, value, color) { return `<div class="overview-row"><span><i class="overview-dot ${color}"></i>${frappe.utils.escape_html(label)}</span><strong>${value}</strong></div>`; }
+function warning(label, count, route) { const value = Number(count || 0); return `<div class="payroll-dashboard-warning-row"><span>${label}</span>${value ? `<a href="#" data-route="${route}">${value} ${__("review")}</a>` : `<span class="text-muted">${__("Clear")}</span>`}</div>`; }
+function payTable(rows, currency) { if (!rows.length) return `<div class="text-muted p-4">${__("No payslips in this period")}</div>`; return `<div class="payroll-pay-table"><div class="payroll-pay-head"><span>${__("Employee")}</span><span>${__("Department")}</span><span>${__("Total Payout")}</span><span>${__("Status")}</span></div>${rows.slice(0, 10).map((r) => `<div class="payroll-pay-row"><strong>${frappe.utils.escape_html(r.employee_name || r.employee)}</strong><span>${frappe.utils.escape_html(r.department)}</span><span>${money(r.net_pay, r.currency || currency)}</span><span class="payroll-status-${String(r.status).toLowerCase()}">${frappe.utils.escape_html(r.status)}</span></div>`).join("")}</div>`; }

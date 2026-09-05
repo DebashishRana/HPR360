@@ -1,6 +1,5 @@
 HR Setup
 Tenure
-Recruitment
 Shift and Attendance
 Leaves
 Expenses

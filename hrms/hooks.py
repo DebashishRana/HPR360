@@ -26,9 +26,10 @@ add_to_apps_screen = [
 # include js, css files in header of desk.html
 # app_include_css = "/assets/hrms/css/hrms.css"
 app_include_js = [
+	"/assets/hrms/js/peoplepay360_landing.js",
 	"hrms.bundle.js",
 ]
-app_include_css = "hrms.bundle.css"
+app_include_css = ["hrms.bundle.css", "/assets/hrms/css/employee_master.css", "/assets/hrms/css/employment_contract.css", "/assets/hrms/css/employee_profile.css"]
 
 # website
 
@@ -56,6 +57,12 @@ doctype_js = {
 	"Journal Entry": "public/js/erpnext/journal_entry.js",
 	"Delivery Trip": "public/js/erpnext/delivery_trip.js",
 	"Bank Transaction": "public/js/erpnext/bank_transaction.js",
+}
+
+doctype_list_js = {
+	"Employee": "public/js/employee_master_list.js",
+	"Employment Contract": "public/js/employment_contract_list.js",
+	"Working Schedule Assignment": "public/js/working_schedule_assignment_list.js",
 }
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
@@ -190,6 +197,7 @@ doc_events = {
 		"on_trash": "hrms.utils.holiday_list.invalidate_cache",
 	},
 	"Timesheet": {"validate": "hrms.hr.utils.validate_active_employee"},
+	"Attendance": {"validate": "hrms.hr.doctype.working_schedule.working_schedule.apply_working_schedule_to_attendance"},
 	"Payment Entry": {
 		"on_submit": "hrms.hr.doctype.expense_claim.expense_claim.update_payment_for_expense_claim",
 		"on_cancel": "hrms.hr.doctype.expense_claim.expense_claim.update_payment_for_expense_claim",
@@ -227,6 +235,11 @@ doc_events = {
 		"on_trash": "hrms.overrides.employee_master.update_employee_transfer",
 		"after_delete": "hrms.overrides.employee_master.publish_update",
 	},
+	"Salary Slip": {"on_update": "hrms.hr.api.employee_profile.publish_employee_profile_update"},
+	"Attendance": {"on_update": "hrms.hr.api.employee_profile.publish_employee_profile_update"},
+	"Employee Checkin": {"after_insert": "hrms.hr.api.employee_profile.publish_employee_profile_update"},
+	"Employment Contract": {"on_update": "hrms.hr.api.employee_profile.publish_employee_profile_update"},
+	"Working Schedule Assignment": {"on_update": "hrms.hr.api.employee_profile.publish_employee_profile_update"},
 	"Project": {"validate": "hrms.controllers.employee_boarding_controller.update_employee_boarding_status"},
 	"Task": {"on_update": "hrms.controllers.employee_boarding_controller.update_task"},
 	# ---- Usage telemetry: recurring feature usage (see hrms/telemetry.py) ----

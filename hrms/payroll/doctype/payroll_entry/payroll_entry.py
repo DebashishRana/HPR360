@@ -94,7 +94,16 @@ class PayrollEntry(Document):
 
 	def validate(self):
 		self.number_of_employees = len(self.employees)
+		self.populate_working_schedules()
 		self.set_status()
+
+	def populate_working_schedules(self):
+		if not frappe.db.exists("DocType", "Working Schedule Assignment"):
+			return
+		from hrms.hr.doctype.working_schedule.working_schedule import get_working_schedule_for_employee
+		for employee in self.employees:
+			schedule = get_working_schedule_for_employee(employee.employee, self.start_date)
+			employee.working_schedule = schedule.name if schedule else None
 
 	def set_status(self, status=None, update=False):
 		if not status:
@@ -108,8 +117,19 @@ class PayrollEntry(Document):
 	def before_submit(self):
 		self.validate_existing_salary_slips()
 		self.validate_payroll_payable_account()
+		self.validate_employment_contracts()
 		if self.get_employees_with_unmarked_attendance():
 			frappe.throw(_("Cannot submit. Attendance is not marked for some employees."))
+
+	def validate_employment_contracts(self):
+		if not frappe.db.exists("DocType", "Employment Contract"):
+			return
+
+		from hrms.hr.doctype.employment_contract.employment_contract import get_contract_for_period
+
+		for employee in self.employees:
+			if frappe.db.exists("Employment Contract", {"employee": employee.employee}):
+				get_contract_for_period(employee.employee, self.start_date, self.end_date)
 
 	def on_submit(self):
 		self.set_status(update=True, status="Submitted")
@@ -1821,6 +1841,9 @@ def get_employee_list(
 
 @frappe.whitelist()
 def get_payrun_wizard_employees(filters: dict) -> dict:
+	if not frappe.has_permission("Payroll Entry", ptype="create"):
+		frappe.throw(_("You do not have permission to create Payroll Entries."), frappe.PermissionError)
+
 	filters = frappe._dict(filters)
 
 	if not filters.company:

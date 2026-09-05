@@ -1000,7 +1000,7 @@ The following repository areas should be used as the starting points for impleme
 - `hrms/payroll/doctype/` - Payroll Entry, Salary Slip, Salary Structure, Salary Component, Payroll Period, and related payroll records.
 - `hrms/payroll/page/payrun_processing/` - existing payroll processing page area.
 - `hrms/payroll/workspace/payroll/payroll.json` - payroll workspace navigation, charts, number cards, and reports.
-- `hrms/payroll/payroll_dashboard/payroll/payroll.json` - payroll dashboard cards and charts.
+- `hrms/payroll/payroll_dashboard/payroll/payrolld.json` - payroll dashboard cards and charts.
 - `frontend/src/views/attendance/` - modern attendance and shift operational views.
 - `frontend/src/views/salary_slip/` - modern salary-slip view.
 - `frontend/src/router/attendance.js` - attendance request, shift, assignment, and check-in routes.

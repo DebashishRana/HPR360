@@ -6,11 +6,15 @@
  "doctype": "DocType",
  "editable_grid": 1,
  "engine": "InnoDB",
- "field_order": ["schedule_name", "company", "is_active", "description", "working_days"],
+ "field_order": ["schedule_name", "schedule_type", "company", "is_active", "weekly_hours", "working_day_count", "assigned_employee_count", "description", "working_days"],
  "fields": [
   {"fieldname": "schedule_name", "fieldtype": "Data", "in_list_view": 1, "label": "Schedule Name", "reqd": 1, "unique": 1},
+  {"fieldname": "schedule_type", "fieldtype": "Select", "in_list_view": 1, "label": "Schedule Type", "options": "\nFixed Weekly\nFlexible\nRotating", "reqd": 1},
   {"fieldname": "company", "fieldtype": "Link", "in_list_view": 1, "label": "Company", "options": "Company"},
   {"default": "1", "fieldname": "is_active", "fieldtype": "Check", "label": "Active"},
+  {"fieldname": "weekly_hours", "fieldtype": "Float", "in_list_view": 1, "label": "Weekly Hours", "read_only": 1, "precision": 2},
+  {"fieldname": "working_day_count", "fieldtype": "Int", "in_list_view": 1, "label": "Working Days", "read_only": 1},
+  {"fieldname": "assigned_employee_count", "fieldtype": "Int", "in_list_view": 1, "label": "Assigned Employees", "read_only": 1},
   {"fieldname": "description", "fieldtype": "Small Text", "label": "Description"},
   {"fieldname": "working_days", "fieldtype": "Table", "label": "Working Days", "options": "Working Schedule Day", "reqd": 1}
  ],

@@ -7,12 +7,21 @@
  "field_order": [
   "employee",
   "employee_name",
+  "working_schedule",
   "column_break_3",
   "department",
   "designation",
   "is_salary_withheld"
  ],
  "fields": [
+  {
+   "fieldname": "working_schedule",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Working Schedule",
+   "options": "Working Schedule",
+   "read_only": 1
+  },
   {
    "columns": 2,
    "fieldname": "employee",

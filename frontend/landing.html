@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#101010" />
+  <title>PeoplePay360 | Payroll without the stress</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root {
+      font-family: "Inter", sans-serif;
+    }
+
+    html,
+    body {
+      margin: 0;
+      min-height: 100%;
+      overflow: hidden;
+    }
+
+    .hero-background {
+      background-image: url("/abbe-sublett-nxZDMUQhN4o-unsplash.jpg");
+      background-position: center;
+      background-size: cover;
+    }
+
+    .fade-up {
+      animation: fade-up 800ms cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+
+    .delay-150 { animation-delay: 150ms; }
+    .delay-300 { animation-delay: 300ms; }
+    .delay-450 { animation-delay: 450ms; }
+
+    @keyframes fade-up {
+      from {
+        opacity: 0;
+        transform: translateY(18px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .fade-up {
+        animation: none;
+        opacity: 1;
+      }
+    }
+  </style>
+</head>
+<body class="bg-neutral-950 text-white antialiased">
+  <main class="relative isolate flex min-h-screen items-center justify-center overflow-hidden">
+    <div class="hero-background absolute inset-0 -z-20" role="img" aria-label="Airline flying above the clouds"></div>
+    <div class="absolute inset-0 -z-10 bg-gradient-to-b from-black/10 via-black/25 to-black/40"></div>
+
+    <nav class="fade-up absolute inset-x-0 top-0 z-10 mx-auto flex w-full max-w-7xl items-center justify-between px-6 py-7 sm:px-10 lg:px-14" aria-label="Primary navigation">
+      <a href="#top" class="text-xl font-semibold tracking-tight text-white">Airlines</a>
+      <div class="hidden items-center gap-8 md:flex">
+        <a href="#about" class="text-[14px] font-normal text-white/90 transition-opacity hover:text-white">About</a>
+        <a href="#services" class="text-[14px] font-normal text-white/90 transition-opacity hover:text-white">Services</a>
+        <a href="#locations" class="text-[14px] font-normal text-white/90 transition-opacity hover:text-white">Locations</a>
+        <a href="#places" class="text-[14px] font-normal text-white/90 transition-opacity hover:text-white">Places</a>
+        <a href="#support" class="text-[14px] font-normal text-white/90 transition-opacity hover:text-white">Support</a>
+      </div>
+      <a href="http://hrms.localhost:8000/desk/hr-setup" class="rounded-full border border-white/80 bg-transparent px-5 py-2.5 text-[14px] font-normal text-white transition-colors duration-300 hover:bg-white hover:text-black">Get Started</a>
+    </nav>
+
+    <section id="top" class="mx-auto flex w-full max-w-4xl flex-col items-center px-6 text-center sm:px-8">
+      <p class="fade-up delay-150 mb-5 text-xs font-medium uppercase tracking-[0.28em] text-white/75">PeoplePay360</p>
+      <h1 class="fade-up delay-300 text-[38px] font-medium leading-[1.1] tracking-[-0.04em] text-white sm:text-[56px]">
+        Payroll and Management<br />Without Any Stress
+      </h1>
+      <p class="fade-up delay-450 mt-6 max-w-xl text-[15px] font-normal leading-7 text-white/80 sm:text-[18px]">
+        Supercharge your workflow with PeoplePay360.
+      </p>
+      <a href="http://hrms.localhost:8000/desk/hr-setup" class="fade-up delay-450 mt-9 inline-flex items-center rounded-full bg-white px-[26px] py-3 text-[15px] font-medium text-black shadow-lg shadow-black/20 transition duration-300 hover:scale-105 hover:shadow-2xl hover:shadow-black/30 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black/20">
+        Get started
+      </a>
+    </section>
+  </main>
+</body>
+</html>

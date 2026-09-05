@@ -11,7 +11,7 @@
  "roles": [{"role": "HR User"}, {"role": "HR Manager"}],
  "sidebar_items": [
   {"child": 0, "icon": "users", "indent": 0, "label": "Employees", "link_to": "Employee", "link_type": "DocType", "type": "Link"},
-  {"child": 0, "icon": "file-text", "indent": 0, "label": "Contracts", "link_to": "Contract", "link_type": "DocType", "type": "Link"},
+  {"child": 0, "icon": "file-text", "indent": 0, "label": "Contracts", "link_to": "Employment Contract", "link_type": "DocType", "type": "Link"},
   {"child": 0, "icon": "calendar-clock", "indent": 0, "label": "Attendance", "link_to": "Attendance", "link_type": "DocType", "type": "Link"},
   {"child": 0, "icon": "calendar-days", "indent": 0, "label": "Time Off", "link_to": "Leaves", "link_type": "Workspace", "type": "Link"},
   {"child": 0, "icon": "settings", "indent": 0, "label": "Working Schedule Setup", "link_to": "working-schedule-setup", "link_type": "Page", "type": "Link"},

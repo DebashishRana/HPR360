@@ -56,6 +56,12 @@ function get_assignment_actions() {
 			prefill: (frm) => ({ employee: frm.doc.name, company: frm.doc.company }),
 			redirect: true,
 		},
+		{
+			label: __("Working Schedule"),
+			doctype: "Working Schedule Assignment",
+			prefill: (frm) => ({ employee: frm.doc.name, company: frm.doc.company, start_date: frappe.datetime.nowdate() }),
+			redirect: true,
+		},
 	];
 }
 
@@ -216,8 +222,56 @@ function notify_assignment_created(action, doc) {
 	});
 }
 
+function load_employee_profile(frm) {
+	if (frm.is_new()) return;
+	frappe.call({
+		method: "hrms.hr.api.employee_profile.get_employee_profile",
+		args: { employee: frm.doc.name },
+	}).then((response) => {
+		if (!response.message || !frm.dashboard) return;
+		const data = response.message;
+		const employee = data.employee || {};
+		const stats = data.stats || {};
+		const money = (value) => frappe.format(value || 0, { fieldtype: "Currency", currency: stats.currency || "" });
+		const esc = (value) => frappe.utils.escape_html(String(value || "-"));
+		const contracts = (data.contracts || []).map((contract) => `
+			<div class="pp360-profile-row"><span>${esc(contract.contract_type)} · ${esc(contract.position)}</span><strong>${esc(contract.status)}</strong><small>${esc(contract.start_date)} - ${esc(contract.end_date || "Present")} · ${money(contract.wage)}</small></div>
+		`).join("") || `<div class="text-muted">${__("No contract history recorded")}</div>`;
+		const activity = (data.activity || []).map((item) => `<div class="pp360-profile-row"><span>${esc(item.log_type || "Check-in")}</span><small>${esc(item.time)}${item.device_id ? ` · ${esc(item.device_id)}` : ""}</small></div>`).join("") || `<div class="text-muted">${__("No recent activity")}</div>`;
+		const schedule = data.schedule ? `${esc(data.schedule.schedule_name)} · ${esc(data.schedule.weekly_hours)} ${__("hours/week")}` : __("No active schedule");
+		frm.dashboard.add_section(`
+			<div class="pp360-employee-profile">
+				<div class="pp360-profile-head"><div><h3>${esc(employee.employee_name)}</h3><p>${esc(employee.designation)} · ${esc(employee.department)} · ${esc(employee.company)}</p></div><span class="indicator-pill ${employee.status === "Active" ? "green" : "gray"}">${esc(employee.status)}</span></div>
+				<div class="pp360-profile-grid">
+					<div class="pp360-profile-card pp360-profile-identity"><div class="pp360-profile-avatar">${employee.image ? `<img src="${esc(employee.image)}" alt="${esc(employee.employee_name)}">` : esc((employee.employee_name || "E").charAt(0))}</div><div><strong>${esc(employee.employee)}</strong><small>${esc(employee.company_email)} · ${esc(employee.cell_number)}</small><small>${__("Joined")} ${esc(employee.date_of_joining)}</small></div></div>
+					<div class="pp360-profile-card"><small>${__("Total Payout · last 12 months")}</small><strong>${money(stats.total_payout)}</strong><span>${esc(stats.currency)}</span></div>
+					<div class="pp360-profile-card"><small>${__("Time Worked · last 12 months")}</small><strong>${esc(stats.time_worked)}h</strong><span>${esc(stats.attendance_count)} ${__("attendance records")}</span></div>
+					<div class="pp360-profile-card"><small>${__("Reimbursement · last 12 months")}</small><strong>${money(stats.reimbursement)}</strong><span>${__("Approved claims")}</span></div>
+					<div class="pp360-profile-card"><small>${__("Current Working Schedule")}</small><strong>${schedule}</strong></div>
+					<div class="pp360-profile-card pp360-profile-wide"><h4>${__("Contract History")}</h4>${contracts}</div>
+					<div class="pp360-profile-card pp360-profile-wide"><h4>${__("Employee Activity")}</h4>${activity}</div>
+				</div>
+			</div>
+		`, __("Employee Overview"));
+	});
+}
+
 frappe.ui.form.on("Employee", {
 	refresh: function (frm) {
+		load_employee_profile(frm);
+		if (!frm.is_new() && !frm.__pp360_profile_realtime) {
+			frm.__pp360_profile_realtime = true;
+			frappe.realtime.on("employee_profile_updated", (payload) => {
+				if (payload?.employee === frm.doc.name) load_employee_profile(frm);
+			});
+			frm.__pp360_profile_interval = setInterval(() => load_employee_profile(frm), 60000);
+		}
+		if (!frm.is_new() && frappe.model.can_read("Employment Contract")) {
+			frm.add_custom_button(__("Contract History"), () => {
+				frappe.route_options = { employee: frm.doc.name };
+				frappe.set_route("List", "Employment Contract");
+			});
+		}
 		frm.set_query("payroll_cost_center", function () {
 			return {
 				filters: {

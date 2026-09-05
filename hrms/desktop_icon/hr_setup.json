@@ -7,7 +7,7 @@
  "icon": "square-user-round",
  "icon_type": "Link",
  "idx": 0,
- "label": "HR Setup",
+ "label": "Employees",
  "link_to": "HR Setup",
  "link_type": "Workspace Sidebar",
  "logo_url": "/assets/hrms/icons/desktop_icons/hr_setup.svg",

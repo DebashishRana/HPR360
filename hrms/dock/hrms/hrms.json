@@ -11,7 +11,7 @@
    "icon": "briefcase-business",
    "link_to": "HR Setup",
    "link_type": "Sidebar",
-   "title": "HR Setup"
+   "title": "Employees"
   },
   {
    "added": 0,
@@ -20,14 +20,6 @@
    "link_to": "Tenure",
    "link_type": "Sidebar",
    "title": "Tenure"
-  },
-  {
-   "added": 0,
-   "hidden": 0,
-   "icon": "users",
-   "link_to": "Recruitment",
-   "link_type": "Sidebar",
-   "title": "Recruitment"
   },
   {
    "added": 0,

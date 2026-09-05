@@ -16,7 +16,7 @@
  "icon": "briefcase-business",
  "idx": 1,
  "is_hidden": 0,
- "label": "HR Setup",
+ "label": "Employees",
  "links": [],
  "modified": "2026-08-26 18:34:03.000000",
  "modified_by": "Administrator",
@@ -199,6 +199,6 @@
   }
  ],
  "standard": 1,
- "title": "HR Setup",
+ "title": "Employees",
  "type": "Workspace"
 }

@@ -10,15 +10,13 @@ frappe.pages["working-schedule-setup"].on_page_load = function (wrapper) {
 	});
 
 	page.set_primary_action(__("New Schedule"), () => open_schedule_dialog(page));
+	page.add_inner_button(__("Assignments"), () => frappe.set_route("List", "Working Schedule Assignment"));
 	$(wrapper).on("show", () => load_schedules(page));
 };
 
 function load_schedules(page) {
-	frappe.db.get_list("Working Schedule", {
-		fields: ["name", "schedule_name", "company", "is_active", "modified"],
-		order_by: "modified desc",
-		limit_page_length: 100,
-	}).then((schedules) => render_schedules(page, schedules));
+	frappe.call({method: "hrms.hr.doctype.working_schedule.working_schedule.get_working_schedule_list"})
+		.then((r) => render_schedules(page, r.message || []));
 }
 
 function render_schedules(page, schedules) {
@@ -54,6 +52,7 @@ function render_schedules(page, schedules) {
 							<span class="indicator-pill ${schedule.is_active ? "green" : "gray"}">${status}</span>
 						</div>
 						<div class="text-muted">${frappe.utils.escape_html(schedule.company || __("All companies"))}</div>
+						<div class="text-muted mt-2">${__("{0} hours/week", [schedule.weekly_hours || 0])} · ${__("{0} working days", [schedule.working_day_count || 0])} · ${__("{0} assigned", [schedule.assigned_employee_count || 0])}</div>
 					</div>
 				</div>
 			</div>
@@ -70,6 +69,7 @@ function open_schedule_dialog(page, schedule_name) {
 		size: "extra-large",
 		fields: [
 			{fieldname: "schedule_name", fieldtype: "Data", label: __("Schedule Name"), reqd: 1, read_only: Boolean(schedule_name)},
+			{fieldname: "schedule_type", fieldtype: "Select", label: __("Schedule Type"), options: "\nFixed Weekly\nFlexible\nRotating", reqd: 1, default: "Fixed Weekly"},
 			{fieldname: "company", fieldtype: "Link", label: __("Company"), options: "Company"},
 			{fieldname: "is_active", fieldtype: "Check", label: __("Active"), default: 1},
 			{fieldname: "description", fieldtype: "Small Text", label: __("Description")},
@@ -86,6 +86,7 @@ function open_schedule_dialog(page, schedule_name) {
 			const doc = {
 				doctype: "Working Schedule",
 				schedule_name: values.schedule_name,
+				schedule_type: values.schedule_type,
 				company: values.company,
 				is_active: values.is_active ? 1 : 0,
 				description: values.description,
@@ -108,7 +109,7 @@ function open_schedule_dialog(page, schedule_name) {
 	dialog.get_field("working_days_html").$wrapper.html(render_working_days());
 	if (schedule_name) {
 		frappe.db.get_doc("Working Schedule", schedule_name).then((doc) => {
-			dialog.set_values({schedule_name: doc.schedule_name, company: doc.company, is_active: doc.is_active, description: doc.description});
+			dialog.set_values({schedule_name: doc.schedule_name, schedule_type: doc.schedule_type, company: doc.company, is_active: doc.is_active, description: doc.description});
 			set_working_days(dialog, doc.working_days || []);
 		});
 	}
