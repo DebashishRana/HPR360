@@ -1,9 +1,12 @@
 <p align="center">
-  <img src="docs/assets/peoplepay360-logo.svg" alt="PeoplePay360 Logo" width="180">
+  <img src="docs/assets/peoplepay360-logo.png" alt="PeoplePay360 Logo" width="180">
 </p>
 
 # PeoplePay360
 
+### HR & Payroll Operations Platform
+
+**Connecting employee lifecycle, contracts, attendance, time off, payroll processing, payslips and operational analytics.**
 ### HR & Payroll Operations Platform
 
 **Connecting employee lifecycle, contracts, attendance, time off, payroll processing, payslips and operational analytics.**
