@@ -1,6 +1,6 @@
-<div align="center">
-
-<img src="docs/assets/peoplepay360-logo.svg" alt="PeoplePay360 Logo" width="180"/>
+<p align="center">
+  <img src="docs/assets/peoplepay360-logo.svg" alt="PeoplePay360 Logo" width="180">
+</p>
 
 # PeoplePay360
 
