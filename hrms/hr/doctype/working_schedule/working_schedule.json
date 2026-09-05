@@ -1,0 +1,35 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "field:schedule_name",
+ "creation": "2026-09-05 00:00:00",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": ["schedule_name", "company", "is_active", "description", "working_days"],
+ "fields": [
+  {"fieldname": "schedule_name", "fieldtype": "Data", "in_list_view": 1, "label": "Schedule Name", "reqd": 1, "unique": 1},
+  {"fieldname": "company", "fieldtype": "Link", "in_list_view": 1, "label": "Company", "options": "Company"},
+  {"default": "1", "fieldname": "is_active", "fieldtype": "Check", "label": "Active"},
+  {"fieldname": "description", "fieldtype": "Small Text", "label": "Description"},
+  {"fieldname": "working_days", "fieldtype": "Table", "label": "Working Days", "options": "Working Schedule Day", "reqd": 1}
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-09-05 00:00:00",
+ "modified_by": "Administrator",
+ "module": "HR",
+ "name": "Working Schedule",
+ "owner": "Administrator",
+ "permissions": [
+  {"create": 1, "delete": 1, "read": 1, "role": "HR Manager", "write": 1},
+  {"create": 1, "read": 1, "role": "HR User", "write": 1},
+  {"read": 1, "role": "Employee"}
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "schedule_name",
+ "track_changes": 1
+}

@@ -1,0 +1,14 @@
+{
+ "content": null,
+ "doctype": "Page",
+ "module": "Payroll",
+ "name": "payrun-processing",
+ "page_name": "payrun-processing",
+ "roles": [
+  {"role": "HR User"},
+  {"role": "HR Manager"},
+  {"role": "Payroll Manager"}
+ ],
+ "standard": "Yes",
+ "title": "Payrun Processing"
+}

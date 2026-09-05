@@ -1,0 +1,24 @@
+{
+ "actions": [],
+ "creation": "2026-09-05 00:00:00",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": ["day", "is_working_day", "start_time", "end_time", "break_minutes"],
+ "fields": [
+  {"fieldname": "day", "fieldtype": "Select", "in_list_view": 1, "label": "Day", "options": "Monday\nTuesday\nWednesday\nThursday\nFriday\nSaturday\nSunday", "reqd": 1},
+  {"default": "1", "fieldname": "is_working_day", "fieldtype": "Check", "in_list_view": 1, "label": "Working Day"},
+  {"fieldname": "start_time", "fieldtype": "Time", "in_list_view": 1, "label": "Start Time"},
+  {"fieldname": "end_time", "fieldtype": "Time", "in_list_view": 1, "label": "End Time"},
+  {"default": "0", "fieldname": "break_minutes", "fieldtype": "Int", "in_list_view": 1, "label": "Break (minutes)", "non_negative": 1}
+ ],
+ "istable": 1,
+ "modified": "2026-09-05 00:00:00",
+ "modified_by": "Administrator",
+ "module": "HR",
+ "name": "Working Schedule Day",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "states": []
+}

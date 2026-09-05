@@ -1,0 +1,10 @@
+{
+ "content": null,
+ "doctype": "Page",
+ "module": "HR",
+ "name": "working-schedule-setup",
+ "page_name": "working-schedule-setup",
+ "roles": [{"role": "HR User"}, {"role": "HR Manager"}],
+ "standard": "Yes",
+ "title": "Working Schedule Setup"
+}
