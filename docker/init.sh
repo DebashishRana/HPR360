@@ -1,33 +1,28 @@
-#!/bin/bash
-set -e
+#!bin/bash
 
-export PATH="${NVM_DIR}/versions/node/v${NODE_VERSION_DEVELOP}/bin/:${PATH}"
-export NODE_OPTIONS="${NODE_OPTIONS:---max-old-space-size=3072}"
-
-cd /home/frappe
-
-if [ -d "frappe-bench/apps/frappe" ]; then
-    echo "Bench already exists, starting..."
+if [ -d "/home/frappe/frappe-bench/apps/frappe" ]; then
+    echo "Bench already exists, skipping init"
     cd frappe-bench
     bench start
-    exit 0
+else
+    echo "Creating new bench..."
 fi
 
-echo "Creating new bench..."
+export PATH="${NVM_DIR}/versions/node/v${NODE_VERSION_DEVELOP}/bin/:${PATH}"
 
 bench init --skip-redis-config-generation frappe-bench
 
 cd frappe-bench
 
+# Use containers instead of localhost
 bench set-mariadb-host mariadb
 bench set-redis-cache-host redis://redis:6379
 bench set-redis-queue-host redis://redis:6379
 bench set-redis-socketio-host redis://redis:6379
 
+# Remove redis, watch from Procfile
 sed -i '/redis/d' ./Procfile
 sed -i '/watch/d' ./Procfile
-# Bind on all interfaces so host browser can reach localhost:8000
-sed -i 's/bench serve.*/bench serve --host 0.0.0.0 --port 8000/' ./Procfile
 
 bench get-app erpnext
 bench get-app hrms
