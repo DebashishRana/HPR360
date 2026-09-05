@@ -1,0 +1,5 @@
+.payrun-wizard-page .payrun-step { border-bottom: 1px solid var(--border-color); padding: 14px 0; }
+.payrun-wizard-page .payrun-step.active { color: var(--primary-color); font-weight: 600; }
+.payrun-wizard-page .payrun-table { font-size: 12px; }
+.payrun-wizard-page .payrun-table td, .payrun-wizard-page .payrun-table th { white-space: nowrap; }
+.payrun-wizard-page .payrun-summary .card { min-height: 90px; }

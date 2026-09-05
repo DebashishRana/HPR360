@@ -1903,6 +1903,26 @@ def get_payrun_processing_data(payroll_entry: str) -> dict:
 
 
 @frappe.whitelist()
+def send_payrun_payslips(payroll_entry: str) -> dict:
+	"""Queue delivery for submitted slips belonging to one payroll batch."""
+	entry = frappe.get_doc("Payroll Entry", payroll_entry)
+	entry.check_permission("read")
+	if not frappe.has_permission("Salary Slip", ptype="read"):
+		frappe.throw(_("You do not have permission to read Salary Slips."), frappe.PermissionError)
+
+	slips = frappe.get_all(
+		"Salary Slip", filters={"payroll_entry": entry.name, "docstatus": 1},
+		fields=["name", "employee", "employee_name"], order_by="employee asc"
+	)
+	if not slips:
+		frappe.throw(_("Submit at least one Salary Slip before sending payslips."))
+
+	from hrms.payroll.doctype.salary_slip.salary_slip import enqueue_email_salary_slips
+	enqueue_email_salary_slips([slip.name for slip in slips])
+	return {"queued": len(slips), "payroll_entry": entry.name}
+
+
+@frappe.whitelist()
 @frappe.validate_and_sanitize_search_inputs
 def employee_query(
 	doctype: str, txt: str, searchfield: str, start: int, page_len: int, filters: dict

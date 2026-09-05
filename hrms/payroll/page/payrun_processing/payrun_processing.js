@@ -112,6 +112,9 @@ function render_payrun(page, data) {
 	if (entry.salary_slips_submitted && !counts.bank_entries && entry.docstatus !== 2) {
 		page.add_inner_button(__("Mark Paid / Make Bank Entry"), () => make_bank_entry(page, entry));
 	}
+	if (entry.salary_slips_submitted && entry.docstatus !== 2) {
+		page.add_inner_button(__("Send Payslips"), () => send_payslips(page, entry));
+	}
 }
 
 function render_stat(label, value) {
@@ -161,4 +164,17 @@ function make_bank_entry(page, entry) {
 		freeze: true,
 		freeze_message: __("Creating payment entry..."),
 	}).then(() => load_payrun(page, entry.name));
+}
+
+function send_payslips(page, entry) {
+	frappe.confirm(__("Queue submitted payslips for email delivery?"), () => {
+		frappe.call({
+			method: "hrms.payroll.doctype.payroll_entry.payroll_entry.send_payrun_payslips",
+			args: { payroll_entry: entry.name },
+			freeze: true,
+			freeze_message: __("Queueing payslips...")
+		}).then((r) => {
+			if (r.message) frappe.msgprint(__("{0} payslips queued for delivery.", [r.message.queued]));
+		});
+	});
 }

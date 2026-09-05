@@ -106,7 +106,11 @@ jinja = {
 
 # before_install = "hrms.install.before_install"
 after_install = "hrms.install.after_install"
-after_migrate = "hrms.setup.update_select_perm_after_install"
+after_migrate = [
+	"hrms.setup.update_select_perm_after_install",
+	"hrms.setup.rename_hr_setup_to_employees",
+	"hrms.setup.remove_recruitment_navigation",
+]
 
 setup_wizard_requires = "assets/hrms/js/setup_wizard.js"
 setup_wizard_stages = "hrms.setup_wizard.get_setup_stages"

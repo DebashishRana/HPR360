@@ -1,0 +1,16 @@
+{
+ "content": null,
+ "doctype": "Page",
+ "module": "Payroll",
+ "name": "payrun-wizard",
+ "page_name": "payrun-wizard",
+ "roles": [
+  {"role": "HR Manager"},
+  {"role": "HR Payroll User"},
+  {"role": "HR Payroll Manager"},
+  {"role": "Payroll Manager"},
+  {"role": "System Manager"}
+ ],
+ "standard": "Yes",
+ "title": "Payrun Wizard"
+}

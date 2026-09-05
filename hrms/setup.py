@@ -798,6 +798,36 @@ def update_select_perm_after_install():
 	frappe.flags.update_select_perm_after_migrate = False
 
 
+def rename_hr_setup_to_employees():
+	"""Keep the employee workspace display name consistent on existing sites."""
+	for doctype, field in (("Workspace Sidebar", "title"), ("Workspace", "label"), ("Desktop Icon", "label")):
+		if frappe.db.exists(doctype, "HR Setup"):
+			frappe.db.set_value(doctype, "HR Setup", field, "Employees", update_modified=False)
+
+	if frappe.db.exists("Dock", "hrms"):
+		dock = frappe.get_doc("Dock", "hrms")
+		for item in dock.items:
+			if item.link_to == "HR Setup":
+				item.title = "Employees"
+		dock.save(ignore_permissions=True)
+	frappe.db.commit()
+
+
+def remove_recruitment_navigation():
+	"""Remove Recruitment navigation records while keeping its data doctypes intact."""
+	for doctype in ("Workspace Sidebar", "Workspace", "Desktop Icon"):
+		if frappe.db.exists(doctype, "Recruitment"):
+			frappe.delete_doc(doctype, "Recruitment", ignore_permissions=True, force=True)
+
+	if frappe.db.exists("Dock", "hrms"):
+		dock = frappe.get_doc("Dock", "hrms")
+		for item in list(dock.items):
+			if item.link_to == "Recruitment" or item.title == "Recruitment":
+				dock.remove(item)
+		dock.save(ignore_permissions=True)
+	frappe.db.commit()
+
+
 def delete_custom_fields(custom_fields: dict):
 	"""
 	:param custom_fields: a dict like `{'Salary Slip': [{fieldname: 'loans', ...}]}`
