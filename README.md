@@ -1,551 +1,820 @@
 <p align="center">
-  <img src="docs/assets/peoplepay360-logo.png" alt="PeoplePay360 Logo" width="180">
+  <img src="docs/assets/peoplepay360-logo.png" alt="PeoplePay360 Logo" width="220">
 </p>
 
-# PeoplePay360
+<h1 align="center">PeoplePay360</h1>
 
-### HR & Payroll Operations Platform
+<p align="center"><strong>HR & Payroll Operations Platform</strong></p>
 
-**Connecting employee lifecycle, contracts, attendance, time off, payroll processing, payslips and operational analytics.**
-### HR & Payroll Operations Platform
+<p align="center">Connecting employee lifecycle, contracts, attendance, time off, compensation, payroll processing, payslips and operational analytics.</p>
 
-**Connecting employee lifecycle, contracts, attendance, time off, payroll processing, payslips and operational analytics.**
-
-<p>
-  <img src="https://img.shields.io/badge/Status-Hackathon%20Build-blue?style=for-the-badge" alt="Status"/>
-  <img src="https://img.shields.io/badge/Platform-Frappe%20%2F%20ERPNext-red?style=for-the-badge" alt="Platform"/>
-  <img src="https://img.shields.io/badge/Frontend-Vue-42b883?style=for-the-badge" alt="Vue"/>
-  <img src="https://img.shields.io/badge/Database-PostgreSQL%2017-blue?style=for-the-badge" alt="PostgreSQL"/>
-  <img src="https://img.shields.io/badge/Cache-Redis-red?style=for-the-badge" alt="Redis"/>
-  <img src="https://img.shields.io/badge/Security-RBAC-orange?style=for-the-badge" alt="Security"/>
+<p align="center">
+  <img src="https://img.shields.io/badge/Status-Hackathon%20Build-0f766e?style=for-the-badge" alt="Hackathon Build">
+  <img src="https://img.shields.io/badge/Platform-Frappe%20%2F%20ERPNext-red?style=for-the-badge" alt="Frappe ERPNext">
+  <img src="https://img.shields.io/badge/Backend-Python-3776AB?style=for-the-badge" alt="Python">
+  <img src="https://img.shields.io/badge/Frontend-Vue%203-42B883?style=for-the-badge" alt="Vue 3">
+  <img src="https://img.shields.io/badge/Database-MariaDB-003545?style=for-the-badge" alt="MariaDB">
+  <img src="https://img.shields.io/badge/Cache%20%26%20Queue-Redis-DC382D?style=for-the-badge" alt="Redis">
+  <img src="https://img.shields.io/badge/Deployment-Docker-2496ED?style=for-the-badge" alt="Docker">
+  <img src="https://img.shields.io/badge/CI-GitHub%20Actions-2088FF?style=for-the-badge" alt="GitHub Actions">
 </p>
-
-<p>
-  <a href="#-overview">Overview</a> •
-  <a href="#-problem">Problem</a> •
-  <a href="#-solution">Solution</a> •
-  <a href="#-implemented-features">Implemented</a> •
-  <a href="#-planned-features">Planned</a> •
-  <a href="#-architecture">Architecture</a> •
-  <a href="#-security">Security</a> •
-  <a href="#-demo-flow">Demo</a>
-</p>
-
-</div>
 
 ---
 
-## 📖 Table of Contents
+# 📚 Table of Contents
 
 - [Overview](#-overview)
-- [Problem](#-problem)
+- [Problem Statement](#-problem-statement)
 - [Solution](#-solution)
 - [Implementation Status](#-implementation-status)
 - [Implemented Features](#-implemented-features)
+- [Platform Foundation](#-platform-foundation)
 - [Planned Features](#-planned-features)
-- [Core Workflow](#-core-workflow)
+- [Complete Business Workflow](#-complete-business-workflow)
 - [Architecture](#-architecture)
+- [Architecture Diagram](#-architecture-diagram)
+- [ERP Business Architecture](#-erp-business-architecture)
+- [Workflows](#-workflows)
+- [ER Diagram](#-er-diagram)
+- [Sequence Diagrams](#-sequence-diagrams)
+- [Security Architecture](#-security-architecture)
+- [RBAC](#-role-based-access-control)
+- [Performance & Scalability](#-performance--scalability)
+- [Redis Architecture](#-redis-architecture)
+- [Caching Strategy](#-caching-strategy)
+- [Background Processing](#-background-processing)
+- [Deployment Architecture](#-deployment-architecture)
 - [Technology Stack](#-technology-stack)
 - [Data Model](#-data-model)
-- [Security](#-security)
-- [Performance & Scalability](#-performance--scalability)
-- [Database Foundation](#-database-foundation)
 - [Testing](#-testing)
 - [CI/CD](#-cicd)
 - [Project Structure](#-project-structure)
 - [Getting Started](#-getting-started)
-- [Hackathon Demo Flow](#-hackathon-demo-flow)
+- [Hackathon Demo](#-hackathon-demo)
 - [Engineering Highlights](#-engineering-highlights)
-- [Why This Architecture](#-why-this-architecture)
+- [Architecture Trade-offs](#-architecture-trade-offs)
+- [Performance Metrics](#-performance-metrics)
+- [Database Foundation](#-database-foundation)
 - [Roadmap](#-roadmap)
-- [Team](#-team)
+- [Why PeoplePay360](#-why-peoplepay360)
 - [License](#-license)
 
 ---
 
 # 📌 Overview
 
-**PeoplePay360** is an integrated HR and Payroll operations platform designed to connect the employee lifecycle from HR master data through payroll processing and payslip delivery.
+**PeoplePay360** is an integrated Human Resource and Payroll Operations Platform built around one connected employee-to-payroll lifecycle.
 
-The system brings together:
+The central idea is to avoid treating HR records as disconnected CRUD screens. Employee information, employment terms, working schedules, attendance, time off, compensation and payroll are connected so that payroll users can make decisions with the relevant context visible.
 
 ```text
 Employee
-   ↓
-Contract + Working Schedule
-   ↓
-Attendance + Time Off
-   ↓
-Salary Structure + Salary Rules
-   ↓
-Payrun
-   ↓
-Payslips
-   ↓
-Validation → Payment → PDF → Email
-   ↓
-Payroll Dashboard
+   │
+   ├──────────────► Employment Contract
+   │
+   ├──────────────► Working Schedule
+   │
+   ├──────────────► Attendance
+   │
+   ├──────────────► Time Off
+   │
+   └──────────────► Salary Structure Assignment
+                           │
+                           ▼
+                    Salary Structure
+                           │
+                           ▼
+                      Payrun Wizard
+                           │
+                           ▼
+                  Employee Eligibility
+                           │
+                           ▼
+                    Payroll Warnings
+                           │
+                           ▼
+                      Payrun Created
+                           │
+                           ▼
+                    Salary Slips
+                           │
+              ┌────────────┼────────────┐
+              ▼            ▼            ▼
+           Validate      Payment     PDF / Email
+              │            │            │
+              └────────────┼────────────┘
+                           ▼
+                    Payroll Dashboard
+                           │
+                           ▼
+                  PeoplePay360 Assistant
 ```
 
-The project is built on the **Frappe / ERPNext / Frappe HR ecosystem** and adds PeoplePay360-specific workflow and payroll experience on top of the existing platform.
-
-The repository also contains an independent **PostgreSQL-based PeoplePay360 database foundation** for domain modeling, constraints, payroll integrity and future service-oriented integration.
+The current application uses the **Frappe / ERPNext / Frappe HRMS** ecosystem as the operational foundation. PeoplePay360-specific work is concentrated around the product workflow, Payrun experience, eligibility visibility, warnings, dashboard and assistant. The repository also contains an independent PostgreSQL foundation under `database/`; it is documented separately and is **not claimed here as the database currently powering the Frappe HRMS runtime**.
 
 ---
 
-# 🎯 Problem
+# 🎯 Problem Statement
 
-HR and payroll data is operationally connected, but many systems expose these areas as disconnected modules.
+HR and payroll operations depend on the same underlying employee facts, but conventional systems often expose them as disconnected modules.
 
-This can create problems such as:
+Typical operational risks include:
 
-- Incorrect contract selection for a payroll period.
-- Unresolved attendance exceptions.
-- Difficult-to-audit leave balances.
-- Non-transparent salary calculations.
-- Accidental inclusion of employees in payroll.
-- Missing payroll information discovered too late.
-- Duplicate payslip generation.
-- Historical payroll data being modified incorrectly.
-- Unauthorized access to sensitive payroll information.
+- Payroll using the wrong employment context for a period.
+- Missing or overlapping contracts.
+- Incomplete attendance reaching payroll.
+- Leave balances that are difficult to reconcile.
+- Salary rules that are hard to understand or audit.
+- Employees entering a payroll batch unintentionally.
+- Missing bank or email information discovered too late.
+- Duplicate payslips or repeated processing.
+- Historical payroll becoming difficult to reproduce.
+- Sensitive payroll data being visible to unauthorized roles.
+- Limited management visibility across HR and payroll data.
 
-PeoplePay360 addresses these problems by connecting HR records and payroll decisions into a single workflow.
+### Product Goal
+
+Build a connected workflow in which important dependencies are **visible, validated and operationally useful before payroll is finalized**.
 
 ---
 
 # 💡 Solution
 
-PeoplePay360 focuses on **business continuity across HR and payroll**.
+PeoplePay360 connects the major HR and payroll domains around the employee as the central business object.
 
-Instead of:
-
-```text
-Employee
-Attendance
-Leave
-Contract
-Salary
-Payroll
-```
-
-being treated as unrelated modules, the platform connects them:
-
-```text
-Employee
-   ├── Contract
-   ├── Working Schedule
-   ├── Attendance
-   ├── Time Off
-   └── Salary Assignment
-          ↓
-    Salary Structure
-          ↓
-       Payrun
-          ↓
-      Payslips
-          ↓
-   Payment / PDF / Email
-          ↓
-       Analytics
-```
-
-The primary product focus is:
-
-- Payroll correctness.
-- Period-aware employment context.
-- Explicit employee selection.
-- Payroll warnings.
-- Salary calculation visibility.
-- Role-based access.
-- Historical integrity.
-- Operational reporting.
+| Domain | Connected responsibility |
+|---|---|
+| Employee | Master profile and employment context |
+| Contract | Historical, date-effective employment terms |
+| Schedule | Expected working pattern |
+| Attendance | Actual time and exceptions |
+| Time Off | Allocation, request, approval and balance |
+| Compensation | Salary structures and components |
+| Payrun | Payroll scope, employee selection and processing |
+| Payslip | Employee-level payroll result |
+| Dashboard | Cross-module operational visibility |
+| Assistant | Role-aware HR/payroll context |
 
 ---
 
 # 🚦 Implementation Status
 
-To keep this repository technically honest, features are divided into three categories.
+This README intentionally separates what exists in the repository from future product evolution.
 
-| Status | Meaning |
+| Marker | Meaning |
 |---|---|
-| ✅ **Implemented** | Functionality currently present in this repository |
-| 🟡 **Platform Foundation** | Functionality provided by Frappe/ERPNext and reused by PeoplePay360 |
-| 🚧 **Planned** | Intended enhancement that should not be considered completed |
-
-> **Important:** Planned features are deliberately separated from implemented functionality. The README should only describe a feature as implemented when it can be demonstrated or verified from the current codebase.
+| ✅ | Implemented in the current repository / demonstrable |
+| 🟡 | Existing platform foundation reused by PeoplePay360 |
+| 🚧 | Planned enhancement; not represented as completed |
 
 ---
 
 # ✅ Implemented Features
 
-## 1. PeoplePay360 Application Branding
+## 1. PeoplePay360 Branding & Navigation
 
-- PeoplePay360 application identity.
-- PeoplePay360 navigation entry.
-- PeoplePay360 payroll dashboard branding.
-- Dedicated PeoplePay360 project documentation.
+Implemented:
+
+- PeoplePay360 application branding.
+- PeoplePay360 application home/navigation.
+- HR and Payroll workspace customization.
+- PeoplePay360-specific product presentation.
+- Custom PeoplePay360 payslip presentation.
+- Dedicated Assistant entry point.
+
+The logo used by this README is expected at:
+
+```text
+docs/assets/peoplepay360-logo.png
+```
 
 ---
 
-## 2. Two-Step Payrun Creation
+## 2. Two-Step Payrun Creation Wizard
 
-A custom Payrun workflow is implemented on top of the Frappe Payroll Entry model.
+The repository contains a dedicated Payrun Wizard instead of relying only on a single generic payroll creation form.
 
-### Step 1 — Scope & Period
+```text
+STEP 1 — Scope & Period
+          │
+          ▼
+STEP 2 — Employee Selection
+          │
+          ▼
+Eligibility / Warning Context
+          │
+          ▼
+Create Payroll Entry
+```
 
-The wizard supports:
+### Step 1 — Scope
+
+Supported payroll scope inputs include:
 
 - Company.
 - Salary Structure.
 - Posting Date.
 - Payroll Frequency.
-- Period Start.
-- Period End.
+- Start Date.
+- End Date.
 - Department.
 - Designation.
 - Branch.
 - Currency.
 - Payroll Payable Account.
-- Timesheet-based payroll option.
+- Salary-slip-based-on-timesheet option.
 
 ### Step 2 — Employee Selection
 
-The system:
+The selection view provides server-derived payroll candidates and employee context, including:
 
-- Fetches eligible employees.
-- Displays employee information.
-- Displays applicable employment contract.
-- Displays salary-withholding information.
-- Supports Select All.
-- Supports Deselect All.
-- Displays selected/total employee count.
-- Requires at least one employee before Payrun creation.
+- Employee.
+- Employee name.
+- Department.
+- Designation.
+- Contract context.
+- Withheld / payroll-related status.
+- Select All / Deselect All.
+- Selection summary.
 
-The Payrun is created only after employee selection.
+The final Payroll Entry is created using the employees selected in the wizard.
+
+> **Accuracy note:** the repository contains server-side eligibility lookup and validation logic. This README does not claim that every possible crafted browser selection is revalidated by a separate final authorization service unless that behavior is explicitly wired into the insert path.
 
 ---
 
 ## 3. Period-Aware Employee Eligibility
 
-The Payrun employee selection logic checks the applicable employment contract for the selected payroll period.
+The Payrun backend resolves applicable employee payroll context using the selected period.
 
-The system can identify:
+Conceptually:
 
-- Applicable employment contract.
-- Salary structure eligibility.
-- Employees without an applicable contract.
-- Salary Structure Assignment fallback where contracts are not yet configured.
+```text
+Employee
+   │
+   ▼
+Company / Scope Filters
+   │
+   ▼
+Applicable Contract
+   │
+   ▼
+Salary Structure / Assignment
+   │
+   ▼
+Payroll Context
+```
 
-This reduces the risk of blindly processing every employee.
-
----
-
-## 4. Payrun Processing Screen
-
-A dedicated Payrun Processing page is implemented.
-
-It provides:
-
-- Payrun status.
-- Employee count.
-- Payslip count.
-- Submitted payslip count.
-- Bank-entry information.
-- Missing bank-detail warnings.
-- Duplicate payslip detection.
-- Processing actions.
-- Payslip delivery action.
-
-The processing screen is directly accessible from Payroll.
+The implementation uses `get_applicable_contract(...)` for period-aware contract resolution and can fall back to Salary Structure Assignment where applicable.
 
 ---
 
-## 5. Payroll Warning Detection
+## 4. Payroll Warning Detection
 
-The current payroll implementation includes warning detection for areas such as:
+The Payrun flow exposes operational warning information before processing.
+
+Examples include:
+
+### Blocking / high-risk conditions
+
+- Missing applicable contract.
+- Invalid payroll scope.
+- Duplicate payslip conditions.
+- Salary configuration issues.
+- Attendance-related payroll readiness issues where validation is enabled.
+
+### Review conditions
 
 - Missing bank details.
-- Duplicate payslips.
-- Unmarked attendance.
-- Contract attention.
-- Queued Payruns.
-- Failed Payruns.
+- Missing email details.
+- Contract attention / overlap situations.
 
-Warnings are surfaced through the Payrun Processing experience and Payroll Dashboard.
+The exact warning policy remains configurable and should be treated separately from the underlying platform's generic validation behavior.
+
+---
+
+## 5. Payrun Processing Page
+
+A dedicated payroll processing interface provides operational visibility into a Payroll Entry.
+
+It can surface:
+
+- Payrun name.
+- Company.
+- Payroll period.
+- Payroll frequency.
+- Employee count.
+- Salary Slip count.
+- Submitted Salary Slip count.
+- Missing bank details.
+- Duplicate payslip information.
+- Payment / processing information.
+- Salary Slip details.
+
+Supported workflow actions include the underlying payroll processing operations such as:
+
+```text
+Compute
+   ↓
+Validate / Review
+   ↓
+Mark Paid
+   ↓
+Send Payslips
+```
 
 ---
 
 ## 6. Payroll Dashboard
 
-A PeoplePay360-branded payroll dashboard is implemented.
+The repository contains a dedicated Payroll Dashboard with live metrics derived from application records.
 
 ### Filters
 
-- Company.
-- Department.
-- Employee Type.
 - From Date.
 - To Date.
+- Company.
+- Department.
+- Employment Type.
 
-### KPIs
+### KPI examples
 
 - Total Net Salary.
 - Payslips Generated.
 - Average Salary.
 - Approved Time Off.
-- Pending Time Off.
 - Active Employees.
 - Attendance Health.
 
 ### Analytics
 
-- Monthly Net Salary Trends.
-- Salary Cost by Department.
-- Department headcount.
-- Attendance Overview.
-- Time Off Overview.
+```text
+Payroll Cost Trend
+Department Salary Breakdown
+Attendance Overview
+Time Off Overview
+Payroll Alerts
+```
 
-### Operational Alerts
+### Operational warnings
 
-- Queued Payruns.
-- Failed Payruns.
-- Missing Bank Details.
-- Duplicate Payslips.
-- Contract Attention.
-- Unmarked Attendance.
+The dashboard can surface items such as:
 
-Dashboard values are retrieved from live Frappe HR/Payroll records through server-side queries.
+- Queued payruns.
+- Failed payruns.
+- Unmarked attendance.
+- Missing bank details.
+- Duplicate payslips.
+- Contract attention.
 
 ---
 
 ## 7. Attendance Warning Infrastructure
 
-The existing HRMS implementation provides attendance warning and exception functionality.
+Attendance data can be used as payroll-readiness context.
 
-The repository includes support for identifying cases such as:
+```text
+Employee Check-in / Check-out
+             │
+             ▼
+         Attendance
+             │
+             ▼
+       Exception Review
+             │
+             ▼
+     Payroll Readiness Context
+```
 
-- Holiday conflicts.
-- Leave conflicts.
-- Attendance corrections.
-- Missing/exception situations.
-
-The payroll dashboard also surfaces attendance-related operational information.
+The repository also uses asynchronous Frappe job infrastructure for expensive attendance processing.
 
 ---
 
 ## 8. Employment Contract Validation
 
-The repository contains Employment Contract logic enforcing the rule:
+Employment Contract logic contains validation to prevent multiple active contracts for the same period.
 
-> Only one active contract is allowed for a given period.
+```text
+Contract A: Jan ───────── Jun
+Contract B:        May ───────── Dec
+                     │
+                     ▼
+                 OVERLAP
+                     │
+                     ▼
+                 VALIDATION
+```
 
-PeoplePay360's Payrun employee selection also uses the applicable contract for the selected payroll context.
+The Payrun path additionally resolves an applicable contract for the selected payroll date/period.
 
 ---
 
 ## 9. Payslip Generation & Delivery
 
-The existing payroll infrastructure provides:
+The platform provides employee-level Salary Slips and PeoplePay360-specific presentation.
 
-- Salary Slip generation.
-- Salary Slip processing.
-- Salary calculation.
-- Salary Slip submission.
-- Payslip PDF/print infrastructure.
-- Email delivery infrastructure.
+```text
+Payroll Entry
+      │
+      ▼
+Salary Slip
+      │
+      ├── Earnings
+      ├── Deductions
+      ├── Gross Pay
+      └── Net Pay
+      │
+      ├────────► Print / PDF
+      │
+      └────────► Bulk Email Queue
+```
 
-PeoplePay360 adds a bulk Payrun delivery action that processes submitted payslips associated with the selected Payrun.
+The bulk email action uses Frappe's asynchronous job infrastructure rather than making the user wait for every email operation.
 
 ---
 
-## 10. Existing HR & Payroll Modules
+## 10. PeoplePay360 Assistant
 
-The repository already contains mature HR/payroll functionality including:
+The repository contains a PeoplePay360 Assistant layer for HR/payroll-oriented context.
 
-- Employee management.
-- Employment contracts.
-- Shift and attendance.
-- Leave management.
-- Salary structures.
-- Salary components.
-- Salary structure assignments.
-- Payroll entries.
-- Salary slips.
-- Payroll reports.
-- Payroll dashboards.
-- Print formats.
+It is designed around the authenticated user's capabilities and relevant HR/payroll data.
 
-These capabilities are reused rather than unnecessarily duplicated.
+Example questions:
+
+```text
+How many active employees are there?
+Which employees need attention?
+Show attendance status.
+Show pending Time Off.
+Which contracts need attention?
+Show payroll information.
+```
+
+---
+
+## 11. Demo Seed Infrastructure
+
+The repository contains PeoplePay360 demo-seeding infrastructure to help create a realistic demonstration environment.
+
+Conceptual seed flow:
+
+```text
+Company
+   ↓
+Departments
+   ↓
+Employees
+   ↓
+Contracts / Schedules
+   ↓
+Attendance / Time Off
+   ↓
+Salary Configuration
+   ↓
+Payroll
+   ↓
+Payslips
+```
 
 ---
 
 # 🟡 Platform Foundation
 
-The following capabilities are available through the underlying Frappe/ERPNext/HRMS platform and form the foundation of PeoplePay360.
+PeoplePay360 intentionally reuses mature capabilities already provided by Frappe / ERPNext / HRMS.
+
+These are **platform capabilities**, not all custom PeoplePay360 code.
 
 ## HR Foundation
 
-- Employee records.
-- Employee lifecycle.
-- Department relationships.
-- User relationships.
-- Employment contracts.
-- Working schedules.
-- Shift assignments.
-- Employee check-ins.
+- Employee management.
+- Company and organization records.
+- Departments.
+- Designations.
+- Branches.
+- Employee Types.
+- Employment Contracts.
+- Working Schedules / shifts.
+- Employee Check-ins.
 - Attendance.
-- Leave applications.
-- Leave allocations.
+- Attendance Requests.
+- Leave Types.
+- Leave Allocations.
+- Leave Applications.
+- Leave Policies.
+- Holiday Lists.
+- Shift Assignments.
 
 ## Payroll Foundation
 
-- Salary Structures.
-- Salary Components.
-- Salary Structure Assignments.
 - Payroll Entry.
+- Payroll Employee Detail.
 - Salary Slip.
+- Salary Structure.
+- Salary Component.
+- Salary Structure Assignment.
 - Payroll Period.
+- Additional Salary.
+- Employee Benefits.
+- Payroll accounting.
+- Payment Entry.
 - Payroll reports.
-- Accounting integration.
-- Payroll print formats.
 
-## Platform Infrastructure
+## Frappe Platform Foundation
 
-- Frappe ORM.
-- Document lifecycle.
-- Permissions.
-- User/session management.
-- Background jobs.
-- Redis.
-- Reporting.
+- Authentication.
+- Sessions.
+- CSRF protection.
+- Role and DocType permissions.
+- ORM / document lifecycle.
+- Server methods.
+- Reports.
+- Print formats.
 - PDF rendering.
-- Application hooks.
-- Database migrations.
-
-PeoplePay360 builds its custom experience around these existing primitives instead of maintaining parallel implementations.
+- Email infrastructure.
+- Background jobs.
+- Redis queues.
+- Realtime infrastructure.
+- Workspaces.
 
 ---
 
 # 🚧 Planned Features
 
-The following features are **planned enhancements and are not represented as completed functionality**.
+The following are future enhancements and should **not** be presented as completed functionality.
 
-## 1. Automated Demo Seed
+## 1. Advanced Payroll Validation
 
-One-command creation of:
+- Advanced payroll readiness scoring.
+- More granular blocking/review/informational rules.
+- Advanced compliance validation.
+- More payroll-period consistency checks.
 
-- Company.
-- Departments.
-- Employees.
-- Contracts.
-- Working schedules.
-- Leave allocations.
-- Salary structures.
-- Sample payroll data.
-
----
-
-## 2. Self-Service Mobile Polish
-
-Further refinement of the Vue/Ionic PWA for:
-
-- Attendance.
-- Check-in/check-out.
-- Time Off requests.
-- Employee self-service.
-
-Employees should not receive payroll administration capabilities.
-
----
-
-## 3. Contract Amendment Workflow
-
-Planned capabilities:
-
-- Versioned contract amendments.
-- Approval workflow.
-- Effective dates.
-- Automatic Salary Structure Assignment synchronization.
-- Contract history visualization.
-
----
-
-## 4. Advanced Payroll Validation
-
-Future validation improvements include:
-
-- Rule-level salary simulation.
-- More detailed salary component validation.
-- Advanced payroll readiness checks.
-- Better warning severity classification.
-- Pre-compute validation.
-
----
-
-## 5. Advanced Salary Calculation Visibility
-
-Planned improvements include:
-
-- Basic salary totals.
-- Allowance totals.
-- Gross totals.
-- Contribution totals.
-- Deduction totals.
-- Net totals.
-- Calculation trace visualization.
-
----
-
-## 6. Production Edge Security
-
-Planned deployment architecture:
+## 2. Contract Amendment Workflow
 
 ```text
-Internet
-   ↓
-Cloudflare
-   ↓
-Nginx
-   ↓
-Application
-   ↓
-Database / Queue
+Existing Contract
+       ↓
+Amendment Request
+       ↓
+Approval
+       ↓
+Effective Date
+       ↓
+New Contract Version
+       ↓
+Payroll Synchronization
 ```
 
-Potential additions:
+## 3. Advanced Salary Calculation Trace
 
+Future employee-level traceability:
+
+```text
+Basic
+  +
+Allowances
+  +
+Variable Pay
+  ↓
+Gross
+  ↓
+Contributions / Deductions
+  ↓
+Net Salary
+```
+
+## 4. Payroll Intelligence
+
+Potential future features:
+
+- Payroll anomaly detection.
+- Payroll forecasting.
+- Workforce cost forecasting.
+- Attendance anomaly detection.
+- Intelligent payroll recommendations.
+
+## 5. Production Edge Security
+
+Potential production additions:
+
+- Cloudflare WAF.
+- Nginx reverse proxy.
 - Rate limiting.
 - TLS termination.
-- Security headers.
-- Prometheus metrics.
-- Grafana dashboards.
-- Centralized observability.
+- Load balancing.
+
+## 6. Advanced Observability
+
+Potential production additions:
+
+- Prometheus.
+- Grafana.
+- Distributed tracing.
+- Centralized logs.
+- Error monitoring.
+- Queue-depth dashboards.
+
+## 7. Advanced Mobile Experience
+
+Potential future improvements:
+
+- Employee self-service polish.
+- Attendance UX improvements.
+- Time Off UX improvements.
+- Mobile payroll/payslip experience.
 
 ---
 
-## 7. Advanced Observability
+# 🔄 Complete Business Workflow
 
-Future improvements:
-
-- Application metrics.
-- Payroll processing metrics.
-- Background-job monitoring.
-- Database metrics.
-- Request latency monitoring.
-- Error-rate dashboards.
+```text
+                         COMPANY
+                            │
+                            ▼
+                        EMPLOYEE
+                            │
+          ┌─────────────────┼─────────────────┐
+          ▼                 ▼                 ▼
+       CONTRACT          SCHEDULE          SALARY
+          │                 │                 │
+          ▼                 ▼                 ▼
+      EMPLOYMENT         ATTENDANCE       SALARY
+        STATE                              ASSIGNMENT
+          │                 │                 │
+          └─────────────────┼─────────────────┘
+                            ▼
+                         TIME OFF
+                            │
+                            ▼
+                       PAYRUN WIZARD
+                            │
+                            ▼
+                    EMPLOYEE ELIGIBILITY
+                            │
+                 ┌──────────┼──────────┐
+                 ▼          ▼          ▼
+              ELIGIBLE    REVIEW    BLOCKED
+                 │          │
+                 └────┬─────┘
+                      ▼
+                EMPLOYEE SELECTION
+                      │
+                      ▼
+                 CREATE PAYRUN
+                      │
+                      ▼
+               SALARY CALCULATION
+                      │
+                      ▼
+                    PAYSLIPS
+                      │
+             ┌────────┼────────┐
+             ▼        ▼        ▼
+          VALIDATE   PAY     DELIVERY
+                              │
+                         PDF / EMAIL
+                              │
+                              ▼
+                     PAYROLL DASHBOARD
+                              │
+                              ▼
+                    PEOPLEPAY360 ASSISTANT
+```
 
 ---
 
-# 🔄 Core Workflow
+# 🏗️ Architecture
 
-## HR Setup
+PeoplePay360 follows an **extension-first architecture**.
+
+The principle is:
+
+```text
+Mature Open-Source HR / ERP Foundation
+                  +
+       PeoplePay360 Product Layer
+                  +
+      Connected Operational UX
+                  +
+       Validation / Visibility
+                  ↓
+        Integrated HR & Payroll
+```
+
+---
+
+# 🧱 Architecture Diagram
+
+```text
+                         ┌─────────────────────┐
+                         │        USERS        │
+                         │ Employee / HR /     │
+                         │ Payroll / Admin     │
+                         └──────────┬──────────┘
+                                    │
+                                    ▼
+                ┌────────────────────────────────────┐
+                │          EXPERIENCE LAYER          │
+                │                                    │
+                │ Frappe Desk                        │
+                │ Vue 3 / Ionic                      │
+                │ Workspaces                         │
+                │ Payrun Wizard                      │
+                │ Payrun Processing                  │
+                │ Payroll Dashboard                  │
+                │ PeoplePay360 Assistant             │
+                └────────────────┬───────────────────┘
+                                 │
+                                 ▼
+                ┌────────────────────────────────────┐
+                │     PEOPLEPAY360 PRODUCT LAYER     │
+                │                                    │
+                │ Eligibility                        │
+                │ Payroll warnings                   │
+                │ Payrun workflow                    │
+                │ Dashboard aggregation              │
+                │ Role-aware assistant               │
+                │ Product presentation               │
+                │ Demo seed                          │
+                └────────────────┬───────────────────┘
+                                 │
+                                 ▼
+                ┌────────────────────────────────────┐
+                │       FRAPPE / HRMS / ERPNext      │
+                │                                    │
+                │ HR │ Attendance │ Leave            │
+                │ Payroll │ Accounting │ Permissions │
+                │ Documents │ ORM │ Reports          │
+                │ Print │ Email │ Background Jobs    │
+                └───────────────┬────────────────────┘
+                                │
+                     ┌──────────┴───────────┐
+                     ▼                      ▼
+             ┌────────────────┐     ┌────────────────┐
+             │    MariaDB     │     │     Redis      │
+             │                │     │                │
+             │ Durable data   │     │ Cache          │
+             │ HR records     │     │ Queue          │
+             │ Payroll data   │     │ Realtime       │
+             │ ERP records    │     │ coordination   │
+             └────────────────┘     └───────┬────────┘
+                                            │
+                                            ▼
+                                      Background
+                                        Workers
+```
+
+---
+
+# 🏢 ERP Business Architecture
+
+```text
+                         COMPANY
+                            │
+             ┌──────────────┼──────────────┐
+             │              │              │
+             ▼              ▼              ▼
+       Departments      Employees      Accounting
+                            │
+             ┌──────────────┼──────────────┐
+             │              │              │
+             ▼              ▼              ▼
+          Contract       Schedule       Salary
+             │              │              │
+             ▼              ▼              ▼
+        Attendance      Time Off     Salary Assignment
+             │              │              │
+             └──────────────┼──────────────┘
+                            ▼
+                          PAYRUN
+                            │
+                    ┌───────┴───────┐
+                    ▼               ▼
+                PAYSLIPS         PAYMENT
+                    │
+               ┌────┴────┐
+               ▼         ▼
+              PDF      EMAIL
+                    │
+                    ▼
+                DASHBOARD
+                    │
+                    ▼
+                ASSISTANT
+```
+
+---
+
+# 🔄 Workflows
+
+## HR Setup Workflow
 
 ```text
 Company
    ↓
-Departments / Employee Types
+Departments / Designations / Employee Types
    ↓
-Working Schedule
+Working Schedule / Shift
    ↓
 Time Off Types
    ↓
@@ -553,498 +822,1120 @@ Salary Components
    ↓
 Salary Structure
    ↓
-Employees
-   ↓
-Contracts
-   ↓
-Salary Assignments
-```
-
-## Daily Operations
-
-```text
 Employee
    ↓
-Check In / Check Out
+Contract + Salary Assignment
    ↓
-Attendance
-   ↓
-Exception Review
-
-Employee
-   ↓
-Time Off Request
-   ↓
-Approval
-   ↓
-Leave Balance
+Payroll Ready
 ```
 
-## Payroll
+---
+
+## Employee Lifecycle Workflow
 
 ```text
-Payroll Period
-      ↓
-Payrun Wizard
-      ↓
-Scope & Period
-      ↓
-Eligible Employees
-      ↓
-Warnings
-      ↓
-Explicit Employee Selection
-      ↓
-Payrun Creation
-      ↓
-Salary Calculation
-      ↓
-Payslips
-      ↓
-Validation
-      ↓
+Employee Creation
+       │
+       ▼
+Personal / Employment Information
+       │
+       ▼
+Department / Designation
+       │
+       ▼
+Employment Contract
+       │
+       ▼
+Working Schedule
+       │
+       ▼
+Attendance / Check-ins
+       │
+       ▼
+Time Off
+       │
+       ▼
+Salary Assignment
+       │
+       ▼
+Payroll
+       │
+       ▼
+Payslip
+       │
+       ▼
 Payment
-      ↓
-PDF / Email
-      ↓
-Payroll Dashboard
 ```
 
 ---
 
-# 🏗️ Architecture
-
-PeoplePay360 uses an extension-oriented architecture.
-
-```text
-┌─────────────────────────────────────────────┐
-│                  USERS                      │
-│                                             │
-│          Frappe Desk + Vue / PWA            │
-└──────────────────────┬──────────────────────┘
-                       │
-                       ▼
-┌─────────────────────────────────────────────┐
-│              PeoplePay360                  │
-│                                             │
-│ Employee │ Contract │ Attendance │ Time Off │
-│ Salary   │ Payrun   │ Payslip    │ Dashboard│
-└──────────────────────┬──────────────────────┘
-                       │
-                       ▼
-┌─────────────────────────────────────────────┐
-│             Frappe Framework               │
-│                                             │
-│ ORM │ Documents │ APIs │ Permissions        │
-│ Jobs │ Reports │ Workflows │ PDF            │
-└──────────────────────┬──────────────────────┘
-                       │
-                       ▼
-┌─────────────────────────────────────────────┐
-│                  ERPNext                    │
-│                                             │
-│ Company │ Accounting │ Payments │ Journals  │
-└──────────────────────┬──────────────────────┘
-                       │
-             ┌─────────┴─────────┐
-             ▼                   ▼
-       ┌────────────┐      ┌────────────┐
-       │  MariaDB   │      │   Redis    │
-       │ Frappe DB  │      │ Cache/Jobs │
-       └────────────┘      └────────────┘
-```
-
----
-
-# 🗄️ PeoplePay360 PostgreSQL Foundation
-
-The repository also contains an independent PostgreSQL domain foundation.
-
-```text
-PeoplePay360 Services
-        ↓
-    PgBouncer
-        ↓
- PostgreSQL 17
-        ↓
-┌───────────────────────────────┐
-│ identity                      │
-│ organization                  │
-│ workforce                     │
-│ time                          │
-│ leave                         │
-│ compensation                  │
-│ payroll                       │
-│ audit                         │
-│ analytics                     │
-└───────────────────────────────┘
-```
-
-This database layer is currently a **separate foundation from the Frappe HRMS database**.
-
-It should not be described as the database currently powering every Frappe HRMS operation.
-
----
-
-# 🧱 Technology Stack
-
-| Layer | Technology |
-|---|---|
-| HR Framework | Frappe Framework |
-| ERP Foundation | ERPNext |
-| HR & Payroll | Frappe HR / HRMS |
-| Backend | Python |
-| UI | Frappe Desk |
-| Operational Frontend | Vue |
-| PWA | Ionic / Vue |
-| Frappe Database | MariaDB |
-| PeoplePay360 Database Foundation | PostgreSQL 17 |
-| Connection Pooling | PgBouncer |
-| Cache / Queue | Redis |
-| Runtime | Docker Compose |
-| Development | Frappe Bench |
-| CI/CD | GitHub Actions |
-| Reporting | Frappe Reports / Dashboards |
-| PDF | Frappe Print Formats |
-
----
-
-# 🗃️ Data Model
-
-## HRMS Domain
+## Attendance Workflow
 
 ```text
 Employee
+   │
+   ▼
+Check In / Check Out
+   │
+   ▼
+Employee Checkin
+   │
+   ▼
+Attendance Processing
+   │
+   ▼
+Attendance Status
+   │
+   ├──────────────► Normal
+   │
+   └──────────────► Exception
+                         │
+                         ▼
+                       Review
+                         │
+                         ▼
+                     Correction
+```
+
+---
+
+## Time Off Workflow
+
+```text
+Employee
+   │
+   ▼
+Time Off Request
+   │
+   ▼
+Manager Approval
+   │
+   ├──────────────► Rejected
+   │
+   └──────────────► Approved
+                         │
+                         ▼
+                    Leave Balance
+                         │
+                         ▼
+                  Attendance / Payroll
+```
+
+---
+
+## Salary Configuration Workflow
+
+```text
+Salary Components
+       │
+       ▼
+Salary Structure
+       │
+       ▼
+Salary Structure Assignment
+       │
+       ▼
+Effective Date
+       │
+       ▼
+Employee
+       │
+       ▼
+Payrun
+```
+
+---
+
+## Payrun Workflow
+
+```text
+Open Payrun Wizard
+       │
+       ▼
+Define Payroll Scope
+       │
+       ▼
+Validate Scope
+       │
+       ▼
+Load Employee Candidates
+       │
+       ▼
+Resolve Applicable Contract
+       │
+       ▼
+Resolve Salary Context
+       │
+       ▼
+Attendance / Duplicate / Required-Data Checks
+       │
+       ▼
+Warnings + Eligibility Context
+       │
+       ▼
+Explicit Employee Selection
+       │
+       ▼
+Create Payroll Entry
+```
+
+---
+
+## Payroll Warning Workflow
+
+```text
+                 EMPLOYEE CANDIDATE
+                         │
+          ┌──────────────┼──────────────┐
+          ▼              ▼              ▼
+      CONTRACT         SALARY       ATTENDANCE
+        CHECK           CHECK          CHECK
+          │              │              │
+          └──────────────┼──────────────┘
+                         ▼
+                  DUPLICATE CHECK
+                         │
+                         ▼
+                  REQUIRED DATA
+                         │
+                         ▼
+                WARNING CLASSIFIER
+                         │
+              ┌──────────┼──────────┐
+              ▼          ▼          ▼
+          BLOCKING     REVIEW      CLEAR
+              │          │          │
+              ▼          ▼          ▼
+           Blocked    Review     Eligible
+```
+
+---
+
+## Payrun Processing Workflow
+
+```text
+Payroll Entry
+      │
+      ▼
+Generate Salary Slips
+      │
+      ▼
+Salary Calculation
+      │
+      ▼
+Review Results
+      │
+      ▼
+Validate / Submit
+      │
+      ▼
+Payment Entry / Payment Flow
+      │
+      ▼
+Print / PDF / Email
+      │
+      ▼
+Dashboard
+```
+
+---
+
+## Payslip Workflow
+
+```text
+Payroll Entry
+      │
+      ▼
+Salary Calculation
+      │
+      ▼
+Salary Slip
+      │
+      ├── Basic
+      ├── Allowances
+      ├── Contributions
+      ├── Gross
+      ├── Deductions
+      └── Net
+      │
+      ▼
+Submit
+      │
+      ├────────► PDF
+      └────────► Email Queue
+```
+
+---
+
+## Payroll Dashboard Data Flow
+
+```text
+Employee Records
+      │
+Attendance Records
+      │
+Leave Applications
+      │
+Employment Contracts
+      │
+Payroll Entries
+      │
+Salary Slips
+      │
+      └──────────────┐
+                     ▼
+             Dashboard Backend
+                     │
+          ┌──────────┼──────────┐
+          ▼          ▼          ▼
+         KPIs     Analytics    Alerts
+          │          │          │
+          ├ Salary   ├ Trends   ├ Queued
+          ├ Headcount├ Dept     ├ Failed
+          ├ Attendance├ Attendance├ Missing Bank
+          └ Time Off └ Time Off ├ Duplicate
+                                └ Contract
+```
+
+---
+
+# 🗄️ ER Diagram
+
+```text
+                         ┌──────────────┐
+                         │    COMPANY   │
+                         └──────┬───────┘
+                                │ 1:N
+                                ▼
+                         ┌──────────────┐
+                         │   EMPLOYEE   │
+                         └──────┬───────┘
+                                │
+       ┌────────────────────────┼─────────────────────────┐
+       │                        │                         │
+       ▼                        ▼                         ▼
+┌───────────────┐       ┌───────────────┐       ┌────────────────┐
+│ EMPLOYMENT    │       │ EMPLOYEE      │       │  ATTENDANCE    │
+│ CONTRACT      │       │ CHECKIN       │       │                │
+└───────────────┘       └───────────────┘       └────────────────┘
+       │
+       ▼
+┌───────────────┐
+│ WORKING       │
+│ SCHEDULE      │
+└───────────────┘
+
+EMPLOYEE
+   │
+   ├──────────────► LEAVE ALLOCATION
+   │                     │
+   │                     ▼
+   │               LEAVE APPLICATION
+   │                     │
+   │                     ▼
+   │                  LEAVE TYPE
+   │
+   └──────────────► SALARY STRUCTURE ASSIGNMENT
+                         │
+                         ▼
+                  SALARY STRUCTURE
+                         │
+                         ▼
+                  SALARY COMPONENTS
+
+PAYROLL ENTRY
+      │
+      ├──────────────► PAYROLL EMPLOYEE DETAIL ─────► EMPLOYEE
+      │
+      ├──────────────► SALARY SLIP ─────────────────► EMPLOYEE
+      │                                      │
+      │                                      ├── Earnings
+      │                                      ├── Deductions
+      │                                      └── Net Pay
+      │
+      └──────────────► PAYMENT ENTRY
+```
+
+---
+
+# 🔗 Entity Relationships
+
+```text
+EMPLOYEE
 │
 ├── Employment Contract
-├── Working Schedule / Shift
+├── Working Schedule / Shift Assignment
 ├── Employee Checkin
 ├── Attendance
 ├── Leave Allocation
 ├── Leave Application
 ├── Salary Structure Assignment
 └── Salary Slip
-       └── Payroll Entry
-```
 
-## PostgreSQL Foundation
+SALARY STRUCTURE
+└── Salary Components
 
-```text
-identity
-   ├── user
-   ├── role
-   ├── permission
-   ├── user_role
-   └── role_permission
-
-organization
-   ├── company
-   ├── department
-   └── job_position
-
-workforce
-   ├── employee
-   ├── employment
-   ├── contract
-   ├── employee_reporting_line
-   └── employee_event
-
-time
-   ├── working_schedule
-   ├── schedule_day
-   ├── schedule_assignment
-   ├── attendance_event
-   ├── attendance_day
-   ├── attendance_exception
-   └── attendance_correction
-
-leave
-   ├── leave_type
-   ├── leave_policy
-   ├── leave_allocation
-   ├── leave_request
-   └── leave_ledger_entry
-
-compensation
-   ├── salary_plan
-   ├── salary_rule
-   ├── salary_rule_dependency
-   └── employee_salary_assignment
-
-payroll
-   ├── payroll_run
-   ├── payroll_run_employee
-   ├── payroll_validation
-   ├── payroll_validation_result
-   ├── idempotency_key
-   ├── payroll_calculation_snapshot
-   ├── payslip
-   ├── payslip_input
-   ├── payslip_line
-   ├── payslip_calculation_trace
-   ├── payroll_adjustment
-   └── payroll_reversal
-
-audit
-   ├── audit_event
-   ├── entity_revision
-   └── system_operation
+PAYROLL ENTRY
+├── Payroll Employee Detail
+├── Salary Slips
+├── Payroll Period
+└── Payment Entry
 ```
 
 ---
 
-# 🔐 Security
+# 🔄 Sequence Diagrams
 
-Payroll information is highly sensitive.
+## Payrun Creation Sequence
 
-PeoplePay360 follows a role-oriented security model.
+```text
+USER
+ │
+ │ Configure payroll scope
+ ▼
+PAYRUN WIZARD
+ │
+ │ Request eligible employees
+ ▼
+PAYRUN BACKEND
+ │
+ ├── Validate company / period
+ ├── Resolve employees
+ ├── Resolve applicable contract
+ ├── Resolve salary context
+ ├── Check attendance context
+ ├── Check duplicate payslips
+ └── Build warnings
+ │
+ ▼
+EMPLOYEE SELECTION
+ │
+ │ Selected employee IDs
+ ▼
+PAYROLL ENTRY CREATION
+ │
+ ▼
+PAYROLL RECORDS
+```
 
-| Role | Intended Access |
+---
+
+## Payroll Processing Sequence
+
+```text
+PAYROLL USER
+     │
+     ▼
+PAYRUN PROCESSING PAGE
+     │
+     ▼
+LOAD PAYROLL DATA
+     │
+     ▼
+COMPUTE SALARY SLIPS
+     │
+     ▼
+SALARY SLIPS
+     │
+     ▼
+VALIDATE / SUBMIT
+     │
+     ▼
+PAYMENT FLOW
+     │
+     ▼
+SEND PAYSLIPS
+     │
+     ▼
+REDIS-BACKED BACKGROUND JOB
+     │
+     ▼
+EMAIL DELIVERY
+```
+
+---
+
+## Assistant Sequence
+
+```text
+USER
+ │
+ ▼
+ASSISTANT UI
+ │
+ ▼
+ASSISTANT API
+ │
+ ▼
+AUTHENTICATED USER / ROLE CONTEXT
+ │
+ ▼
+CONTEXT RESOLUTION
+ │
+ ├── Employee
+ ├── Attendance
+ ├── Time Off
+ ├── Contracts
+ └── Payroll
+ │
+ ▼
+RESPONSE ENGINE
+ │
+ ▼
+ROLE-AWARE RESPONSE
+```
+
+---
+
+# 🔐 Security Architecture
+
+HR and payroll contain sensitive personal and financial information. Security is therefore enforced as a server-side concern.
+
+```text
+                         USER
+                          │
+                          ▼
+                   AUTHENTICATION
+                          │
+                          ▼
+                    FRAPPE SESSION
+                          │
+                          ▼
+                     ROLE RESOLUTION
+                          │
+               ┌──────────┴──────────┐
+               ▼                     ▼
+       UI Capability Check     Server Permission
+               │                     │
+               └──────────┬──────────┘
+                          ▼
+                 Business Validation
+                          │
+                          ▼
+                    HR / PAYROLL
+                          │
+                          ▼
+                       MariaDB
+```
+
+### Security principles
+
+- Server-side authorization.
+- Role and DocType permissions.
+- Record-level restrictions where required.
+- Sensitive payroll configuration restricted by role.
+- Frontend visibility is not treated as the security boundary.
+- Payroll history should not be casually rewritten.
+- Privileged operations should remain auditable.
+- Secrets must stay outside source control.
+
+---
+
+# 👥 Role-Based Access Control
+
+The intended product role model is:
+
+| Role | Core responsibility |
 |---|---|
-| **Employee** | Own HR, attendance and Time Off information |
-| **HR Manager** | HR operations without payroll administration |
-| **HR Payroll User** | HR operations + Payruns/Payslips |
-| **HR Payroll Manager** | HR + payroll configuration |
-| **Admin** | Complete administration |
+| Employee | Own employee, attendance, Time Off and payslip context |
+| HR Manager | Employee, contracts, schedules, attendance and Time Off |
+| HR Payroll User | HR operations plus payroll processing and payslips |
+| HR Payroll Manager | Full HR + payroll configuration and processing |
+| Admin | Full system and permission administration |
 
-## Security Principles
+Conceptual hierarchy:
 
-### Server-Side Authorization
+```text
+                         ADMIN
+                           │
+                ┌──────────┴──────────┐
+                ▼                     ▼
+        HR PAYROLL MANAGER       HR MANAGER
+                │                     │
+                ▼                     ▼
+        HR PAYROLL USER          HR OPERATIONS
+                │
+                ▼
+             EMPLOYEE
+```
 
-Frontend visibility is not treated as a security boundary.
-
-Sensitive operations must be protected at the server/API layer.
-
-### Record-Level Access
-
-Users should only access records permitted by their role and scope.
-
-### Payroll Protection
-
-Sensitive operations include:
-
-- Salary configuration.
-- Payslip access.
-- Payroll processing.
-- Payment operations.
-- Salary rule modification.
-
-### API Security
-
-Changing an identifier in a URL or API request should not bypass authorization.
+> Exact permissions should be verified against the current Frappe Role / DocType configuration before treating the matrix as a security certification.
 
 ---
 
 # ⚡ Performance & Scalability
 
-## Redis
-
-Redis provides the infrastructure for:
-
-- Caching.
-- Background queues.
-- Realtime workloads.
-- Expensive asynchronous processing.
-
-## Background Jobs
-
-Suitable asynchronous operations include:
+The architecture separates durable business data from fast/temporary infrastructure.
 
 ```text
-Bulk Payslip Generation
-        ↓
-Background Queue
-        ↓
-Worker
-        ↓
-PDF Generation
-        ↓
-Email Delivery
+MariaDB = Durable Source of Truth
+Redis   = Cache + Queue + Realtime Coordination
+Workers = Expensive Background Processing
 ```
 
-The goal is to prevent expensive operations from unnecessarily blocking interactive requests.
-
----
-
-# 🐘 PostgreSQL + PgBouncer
-
-The PostgreSQL foundation uses:
+Performance strategy:
 
 ```text
-Application
-    ↓
-PgBouncer :6432
-    ↓
-PostgreSQL :5432
+Interactive Request
+       │
+       ▼
+Fast Validation / Read
+       │
+       ├────────► Redis HIT → Fast Response
+       │
+       └────────► DB Read → Optional Cache Population
+
+Expensive Work
+       │
+       ▼
+Redis-backed Queue
+       │
+       ▼
+Background Worker
+       │
+       ▼
+Result / Status Update
 ```
 
-The repository configures PgBouncer using **session pooling**.
+---
 
-Migrations intentionally connect directly to PostgreSQL.
+# 🔴 Redis Architecture
 
-This separation helps keep migration operations independent from pooled application traffic.
+Redis is already integrated through Frappe infrastructure; it is not an artificial Node/Express Redis layer.
+
+Redis serves multiple roles:
+
+```text
+                         REDIS
+                           │
+           ┌───────────────┼───────────────┐
+           ▼               ▼               ▼
+         CACHE           QUEUE          REALTIME
+           │               │               │
+           ▼               ▼               ▼
+       Fast Reads      Workers        Push Events
+                           │
+              ┌────────────┼────────────┐
+              ▼            ▼            ▼
+           Payroll     Attendance      Email
+```
+
+The repository Docker setup uses the Compose service name `redis` for container-to-container connectivity.
 
 ---
 
-# 🔒 Database Integrity
+# 🧠 Caching Strategy
 
-The PostgreSQL foundation includes database-level safeguards.
+The repository uses real Frappe cache APIs for suitable data.
 
-## Contract Integrity
+### Cache-aside pattern
 
-Active employment contracts use PostgreSQL exclusion constraints to prevent overlapping active periods for the same employee.
+```text
+Request
+  │
+  ▼
+Check Redis
+  │
+  ├── HIT ───────► Return Cached Value
+  │
+  └── MISS
+       │
+       ▼
+   Read / Calculate
+       │
+       ▼
+    Store Cache
+       │
+       ▼
+   Return Result
+```
 
-## Leave Ledger
+Examples documented in the repository's Redis system-design material include holiday calculations and leave-type mappings.
 
-Leave ledger records use append-only protection.
+### Cache invalidation
 
-## Salary Rule Dependencies
+Payroll correctness matters more than blindly maximizing cache hit rate.
 
-Salary-rule dependency protection prevents invalid dependency cycles.
+```text
+Update Source Data
+       │
+       ▼
+Invalidate Dependent Cache
+       │
+       ▼
+Next Read
+       │
+       ▼
+Fresh Value
+```
 
-## Payslip Integrity
-
-Payslip records have immutability protections after posting.
-
-## Payroll Run Integrity
-
-Payroll runs include state-transition and post-processing protections.
-
-## Idempotency
-
-The PostgreSQL foundation includes a dedicated idempotency-key model.
-
-## Auditability
-
-Dedicated audit structures are present for:
-
-- Audit events.
-- Entity revisions.
-- System operations.
-
-These constraints provide database-level protection rather than relying only on application code.
+The repository includes cache invalidation for payroll-relevant configuration such as leave types and salary component data.
 
 ---
 
-# 🔁 Payroll State Model
+# 🔁 Background Processing
 
-The product workflow is designed around explicit payroll states.
+Long-running operations should not monopolize the interactive HTTP request.
+
+Frappe's `frappe.enqueue()` is used for real asynchronous workloads.
+
+```text
+User Action
+    │
+    ▼
+Fast Validation
+    │
+    ▼
+Enqueue Job
+    │
+    ▼
+Redis Queue
+    │
+    ▼
+Background Worker
+    │
+    ├── Payroll Processing
+    ├── Attendance Processing
+    ├── Bulk Payslip Email
+    └── Other Expensive Work
+    │
+    ▼
+Status / Result
+```
+
+The repository's Redis guide documents examples for:
+
+- Large payroll salary-slip generation.
+- Attendance processing.
+- Bulk salary-slip email.
+- Overtime processing.
+- Realtime infrastructure.
+
+This gives the project a genuine latency/concurrency strategy rather than merely claiming that Redis is installed.
+
+---
+
+# 🌐 Realtime Architecture
+
+```text
+Browser / PWA
+     │
+     │ WebSocket / realtime event
+     ▼
+Frappe Realtime Layer
+     │
+     ▼
+Redis Socket / Realtime Infrastructure
+     │
+     ▼
+Connected Clients
+```
+
+Useful cases include:
+
+- Job status.
+- Progress notifications.
+- Dashboard refreshes.
+- Server-to-client events.
+
+---
+
+# 🐳 Docker Architecture
+
+The main Docker environment provisions the Frappe runtime together with MariaDB and Redis.
+
+```text
+┌──────────────────────────────────────────┐
+│              Docker Compose              │
+│                                          │
+│   ┌─────────────┐                        │
+│   │   Frappe    │                        │
+│   │   Bench     │                        │
+│   └──────┬──────┘                        │
+│          │                               │
+│     ┌────┴────┐                          │
+│     ▼         ▼                          │
+│  MariaDB    Redis                        │
+│     │         │                          │
+│     ▼         ├── Cache                  │
+│   Durable     ├── Queue                  │
+│    Data       └── Realtime               │
+└──────────────────────────────────────────┘
+```
+
+Configured development services include the Frappe web service and Redis/MariaDB infrastructure. The repository's compose file exposes the configured development ports, including port `8000` for the web interface.
+
+---
+
+# 🚀 Deployment Architecture
+
+## Current development topology
+
+```text
+Developer / Browser
+        │
+        ▼
+Docker Compose
+        │
+        ├── Frappe Bench
+        ├── MariaDB
+        └── Redis
+```
+
+## Production evolution
+
+```text
+                         INTERNET
+                            │
+                            ▼
+                       CLOUDFLARE
+                            │
+                            ▼
+                          NGINX
+                            │
+                            ▼
+                     LOAD BALANCER
+                            │
+             ┌──────────────┼──────────────┐
+             ▼              ▼              ▼
+          APP-01         APP-02         APP-03
+             │              │              │
+             └──────────────┼──────────────┘
+                            │
+                  ┌─────────┴─────────┐
+                  ▼                   ▼
+                REDIS              MariaDB
+                  │
+                  ▼
+               WORKERS
+```
+
+> Cloudflare, Nginx, multi-node application scaling and advanced observability are production evolution plans, not claims about the current hackathon deployment.
+
+---
+
+# 🗃️ Data Model
+
+## Employee-centric model
+
+```text
+Employee
+│
+├── Employment Contract
+├── Working Schedule / Shift Assignment
+├── Employee Checkin
+├── Attendance
+├── Leave Allocation
+├── Leave Application
+├── Salary Structure Assignment
+└── Salary Slip
+```
+
+## Payroll-centric model
+
+```text
+Payroll Entry
+│
+├── Payroll Employee Detail
+│       └── Employee
+│
+├── Salary Slip
+│       ├── Employee
+│       ├── Salary Structure
+│       ├── Earnings
+│       ├── Deductions
+│       └── Net Pay
+│
+└── Payment Entry
+```
+
+---
+
+# 🧾 Salary Calculation Model
+
+```text
+Salary Structure
+       │
+       ▼
+Ordered Salary Components
+       │
+       ├── Basic
+       ├── Allowances
+       ├── Contributions
+       └── Deductions
+       │
+       ▼
+Gross Salary
+       │
+       ▼
+Deductions / Contributions
+       │
+       ▼
+Net Salary
+       │
+       ▼
+Salary Slip
+```
+
+The existing Frappe payroll calculation engine remains the authoritative calculation foundation rather than introducing an unnecessary parallel formula engine.
+
+---
+
+# 🔒 Payroll State Model
+
+The underlying Frappe payroll lifecycle can be represented conceptually as:
 
 ```text
 Draft
-  ↓
-Computed
-  ↓
-Validation Required
-  ↓
-Validated
-  ↓
+  │
+  ▼
+Compute / Queue
+  │
+  ▼
+Salary Slips Generated
+  │
+  ▼
+Review / Validate
+  │
+  ▼
+Submitted
+  │
+  ▼
+Payment
+  │
+  ▼
 Paid
-  ↓
-Sent
+  │
+  ▼
+Payslip Delivery
 ```
 
-The underlying Frappe Payroll Entry lifecycle remains authoritative for the current HRMS implementation.
-
-The PeoplePay360 presentation layer provides clearer Payrun terminology and processing visibility.
-
----
-
-# 🧠 Engineering Principles
-
-## Data Integrity
-
-Payroll decisions should be based on authoritative server-side records.
-
-## Security by Design
-
-Authorization must exist independently of frontend visibility.
-
-## Auditability
-
-Historical payroll and employment records should remain traceable.
-
-## Idempotency
-
-Repeated payroll operations should not create unintended duplicate results.
-
-## Separation of Concerns
-
-PeoplePay360-specific functionality should remain separate from generic platform infrastructure.
-
-## Reuse Before Rebuild
-
-Mature HR, payroll, accounting and framework functionality should be reused wherever appropriate.
-
-## Validate Before Finalization
-
-Potential payroll issues should be surfaced before final payroll completion.
+PeoplePay360 adds operational visibility around these states rather than inventing a second financial ledger.
 
 ---
 
 # 🧪 Testing
 
-Testing is divided between the Frappe/HRMS application and the PostgreSQL foundation.
+Testing spans the application layer and the independent PostgreSQL foundation.
 
-## Application Testing
+## Application testing
 
-The repository contains tests across HRMS modules including payroll and employee-related functionality.
+The repository includes Frappe/HRMS unit-test infrastructure and dedicated Payrun Wizard tests.
 
-Important payroll scenarios include:
+Important areas:
 
-- Payroll Entry processing.
-- Salary Structure Assignment.
-- Salary calculations.
-- Salary Slip processing.
-- Attendance.
-- Leave.
-- Employee workflows.
+- Payrun scope validation.
+- Employee eligibility.
+- Contract resolution.
+- Salary assignment context.
+- Duplicate payslip detection.
+- Payroll processing behavior.
+- Dashboard data retrieval.
+- Assistant behavior where applicable.
 
-## PostgreSQL Foundation Tests
+## Database foundation testing
 
-The database test suite explicitly validates constraints including:
+The `database/tests/` suite exercises failure conditions including:
 
 - Foreign-key integrity.
-- Empty date-range rejection.
-- Overlapping active contracts.
-- Leave ledger amount constraints.
-- Append-only ledger behavior.
-- Salary-rule dependency cycles.
+- Invalid/empty ranges.
+- Overlapping contracts.
+- Append-only leave ledger behavior.
+- Salary-rule dependency cycle violations.
 - Invalid payroll periods.
-- Duplicate payslips.
-
-Example:
-
-```text
-Invalid Contract
-       ↓
-Database Constraint
-       ↓
-Rejected
-
-Duplicate Payslip
-       ↓
-Unique Constraint
-       ↓
-Rejected
-```
+- Duplicate payslip prevention.
 
 ---
 
-# 🔧 CI/CD
+# 🧪 Test Matrix
 
-The repository contains GitHub Actions workflows for automated quality checks.
+| Scenario | Expected outcome |
+|---|---|
+| Missing company | Reject payroll scope |
+| Missing payroll period | Reject payroll scope |
+| Invalid date range | Reject |
+| Missing payroll frequency | Reject |
+| Missing applicable contract | Warning / block according to policy |
+| Overlapping contracts | Validation / review |
+| Invalid salary configuration | Blocking validation |
+| Duplicate payslip | Blocking validation |
+| Missing bank details | Review warning |
+| Missing email | Review warning |
+| Attendance validation failure | Warning / block according to policy |
+| Valid employee | Eligible |
 
-Current workflow infrastructure includes:
+---
 
-- Application tests.
-- Patch testing.
-- Documentation checks.
-- Pull-request labeling.
-- Coverage reporting.
-- Release automation.
+# 🔁 CI/CD
 
-The CI environment also uses dependency caching and multiple supported runtime configurations where applicable.
+The repository contains GitHub Actions workflows for automated checks and Frappe/HRMS testing.
+
+Conceptual pipeline:
+
+```text
+Developer Push / Pull Request
+              │
+              ▼
+       GitHub Actions
+              │
+       ┌──────┴──────┐
+       ▼             ▼
+ Python Setup     Node Setup
+       │             │
+       └──────┬──────┘
+              ▼
+      Compilation / Checks
+              │
+              ▼
+        MariaDB Service
+              │
+              ▼
+      Install Dependencies
+              │
+              ▼
+       Frappe / HRMS Tests
+              │
+          ┌───┴───┐
+          ▼       ▼
+        PASS     FAIL
+          │       │
+          ▼       ▼
+      Coverage  Pipeline
+```
+
+CI capabilities include automated test execution, compilation checks, dependency caching and coverage reporting.
+
+---
+
+# 🧰 Technology Stack
+
+| Layer | Technology | Purpose |
+|---|---|---|
+| Framework | Frappe Framework | Documents, ORM, APIs, permissions, jobs |
+| ERP | ERPNext | Accounting, company and payment foundation |
+| HR / Payroll | Frappe HR / HRMS | Employee, attendance, leave and payroll |
+| Backend | Python | Business logic and controllers |
+| Main UI | Frappe Desk | Operational HR/payroll interface |
+| Frontend | Vue 3 | Modern operational/self-service UI |
+| Mobile/PWA | Ionic Vue | Mobile-oriented experience |
+| Build | Vite | Frontend tooling |
+| Styling | Tailwind / Frappe UI | UI presentation |
+| Database | MariaDB | Current Frappe operational persistence |
+| Cache | Redis | Fast reads / cache |
+| Queue | Redis + Frappe Workers | Background processing |
+| Runtime | Docker Compose / Frappe Bench | Reproducible environment |
+| CI/CD | GitHub Actions | Automated validation |
+| Coverage | Codecov | Coverage reporting |
+| DB Foundation | PostgreSQL 17 | Independent PeoplePay360 SQL foundation |
+| DB Pooling | PgBouncer | PostgreSQL foundation connection pooling |
+
+---
+
+# 🗄️ Database Foundation
+
+The repository also contains an independent PostgreSQL foundation under `database/`.
+
+## Important distinction
+
+```text
+CURRENT FRAPPE RUNTIME
+Frappe / HRMS
+     │
+     ▼
+ MariaDB
+     │
+     ▼
+ Redis
+
+SEPARATE PEOPLEPAY360 FOUNDATION
+PeoplePay360 SQL Domain Model
+     │
+     ▼
+ PgBouncer
+     │
+     ▼
+PostgreSQL 17
+```
+
+The PostgreSQL layer should **not** be described as the current Frappe application's operational database unless application integration is completed.
+
+## PostgreSQL schemas
+
+```text
+identity
+organization
+workforce
+time
+leave
+compensation
+payroll
+audit
+analytics
+```
+
+## Foundation protections
+
+The SQL foundation includes structures for:
+
+- Foreign-key integrity.
+- Effective-date contract ranges.
+- Contract overlap protection.
+- Salary-rule dependency protection.
+- Payroll state transitions.
+- Payroll locking.
+- Idempotency keys.
+- Posted payroll immutability.
+- Payslip immutability.
+- Append-only audit structures.
+- Analytics views.
+
+The database documentation specifies transaction-scoped payroll locking and idempotency patterns for that foundation.
+
+---
+
+# 🔐 Data Integrity Principles
+
+## Contract integrity
+
+```text
+Employee
+  ↓
+Date-effective contracts
+  ↓
+One deterministic applicable context
+```
+
+## Salary-rule integrity
+
+```text
+Rule A
+  ↓
+Rule B
+  ↓
+Rule C
+```
+
+Dependencies must form a valid calculation graph rather than a cycle.
+
+## Payslip integrity
+
+A payslip should remain associated with:
+
+- Employee.
+- Payroll period.
+- Payroll run.
+- Salary context.
+- Calculated component values.
+
+## Historical integrity
+
+Finalized payroll should be treated as historical financial data.
+
+```text
+Current Configuration
+        ≠
+Historical Payroll Result
+```
 
 ---
 
@@ -1055,48 +1946,146 @@ HPR360-main/
 │
 ├── .github/
 │   └── workflows/
+│       ├── ci.yml
+│       ├── release.yml
+│       ├── docs_checker.yml
+│       └── other repository automation
 │
 ├── database/
-│   ├── init/
 │   ├── migrations/
+│   ├── tests/
 │   ├── pgbouncer/
 │   ├── scripts/
-│   ├── tests/
-│   └── docker-compose.yml
+│   ├── docker-compose.yml
+│   └── README.md
 │
 ├── docker/
 │   ├── docker-compose.yml
 │   ├── init.sh
-│   └── verify_peoplepay.sh
+│   └── seed / verification helpers
 │
 ├── frontend/
-│   └── src/
-│       ├── components/
-│       ├── composables/
-│       ├── router/
-│       └── views/
-│
-├── roster/
-│   └── src/
+│   ├── src/
+│   │   ├── components/
+│   │   ├── composables/
+│   │   ├── router/
+│   │   ├── utils/
+│   │   └── views/
+│   ├── package.json
+│   └── vite.config.js
 │
 ├── hrms/
-│   ├── api/
 │   ├── hr/
-│   ├── leaves/
+│   │   ├── doctype/
+│   │   ├── report/
+│   │   └── workspace/
+│   │
 │   ├── payroll/
-│   ├── recruitment/
+│   │   ├── doctype/
+│   │   ├── page/
+│   │   │   ├── payrun_wizard/
+│   │   │   ├── payrun_processing/
+│   │   │   └── payroll_dashboard/
+│   │   ├── print_format/
+│   │   └── workspace/
+│   │
+│   ├── peoplepay360/
+│   │   ├── chatbot/
+│   │   ├── demo_seed.py
+│   │   └── roles.py
+│   │
 │   ├── shift_and_attendance/
 │   ├── tax_and_benefits/
-│   ├── tenure/
-│   ├── controllers/
-│   ├── overrides/
 │   └── hooks.py
 │
-├── PeoplePay360-ROADMAP.md
+├── docs/
+│   └── assets/
+│       └── peoplepay360-logo.png
+│
+├── main.md
 ├── PeoplePay360 HR & Payroll.md
+├── PeoplePay360-ROADMAP.md
 ├── SECURITY.md
+├── pyproject.toml
+├── package.json
 └── README.md
 ```
+
+---
+
+# 🔌 Key Components
+
+## Payrun Wizard
+
+```text
+hrms/payroll/page/payrun_wizard/
+```
+
+Responsibilities:
+
+- Payroll scope.
+- Period selection.
+- Employee eligibility lookup.
+- Contract context.
+- Salary context.
+- Payroll warnings.
+- Employee selection.
+- Payroll Entry creation.
+
+## Payrun Processing
+
+```text
+hrms/payroll/page/payrun_processing/
+```
+
+Responsibilities:
+
+- Payrun status.
+- Salary Slip status.
+- Warning display.
+- Processing actions.
+- Payment flow.
+- Payslip delivery.
+
+## Payroll Dashboard
+
+```text
+hrms/payroll/page/payroll_dashboard/
+```
+
+Responsibilities:
+
+- KPIs.
+- Salary trends.
+- Department breakdown.
+- Attendance analytics.
+- Time Off analytics.
+- Payroll alerts.
+
+## PeoplePay360 Assistant
+
+```text
+hrms/peoplepay360/chatbot/
+```
+
+Core areas include API/context/engine logic and supporting role/data utilities.
+
+---
+
+# ⚙️ Configuration & Environment
+
+Do not commit credentials.
+
+Typical environment-sensitive configuration includes:
+
+- Database credentials.
+- PostgreSQL foundation credentials.
+- PgBouncer credentials.
+- Site configuration.
+- Email configuration.
+- Deployment-specific secrets.
+
+The PostgreSQL foundation provides `.env.example` as the local configuration starting point.
 
 ---
 
@@ -1104,32 +2093,18 @@ HPR360-main/
 
 ## Prerequisites
 
-Depending on which part of the repository you are working with:
+- Git.
+- Docker.
+- Docker Compose.
+- Python 3.10+.
+- Node.js.
+- Yarn.
+- Frappe Bench where required by the development workflow.
 
-- Git
-- Docker
-- Docker Compose
-- Python
-- Node.js
-- Yarn
-- Frappe Bench
-- PostgreSQL 17
-- `psql`
-
-## Clone
+## Start the main Frappe environment
 
 ```bash
-git clone <repository-url>
-cd HPR360-main
-```
-
----
-
-## Start Frappe/HRMS
-
-Use the repository's configured Frappe Bench/Docker development environment.
-
-```bash
+cd docker
 docker compose up -d
 ```
 
@@ -1139,363 +2114,689 @@ Check services:
 docker compose ps
 ```
 
-Then use the configured Bench environment to run the Frappe site.
-
----
-
-# 🐘 PostgreSQL Foundation Setup
-
-The PostgreSQL layer is located under:
+The repository Docker setup includes:
 
 ```text
-database/
+MariaDB
+Redis
+Frappe Bench / Application
 ```
 
-### 1. Create local environment
+## Frappe development commands
+
+Inside the configured Bench environment:
+
+```bash
+bench --site <site-name> migrate
+bench --site <site-name> clear-cache
+bench --site <site-name> enable-scheduler
+```
+
+## Frontend
+
+```bash
+cd frontend
+yarn install
+yarn build
+```
+
+For development:
+
+```bash
+yarn dev
+```
+
+## PostgreSQL foundation
+
+The PostgreSQL foundation is independent:
 
 ```bash
 cd database
 cp .env.example .env
-```
-
-Set unique local development passwords in `.env`.
-
-### 2. Start PostgreSQL and PgBouncer
-
-```bash
 docker compose --env-file .env up -d
 ```
 
-### 3. Database endpoints
+Then follow `database/README.md` for migrations, PgBouncer and SQL tests.
 
-```text
-PostgreSQL
-localhost:5432
-
-PgBouncer
-localhost:6432
-```
-
-Application traffic should use PgBouncer.
-
-Migration operations intentionally use PostgreSQL directly.
-
-### 4. Run migration
-
-Use:
-
-```text
-database/scripts/migrate.ps1
-```
-
-with the configured migration database connection.
-
-### 5. Run database tests
-
-Use:
-
-```text
-database/scripts/test.ps1
-```
-
-with the dedicated test database.
-
-> Do not use `docker compose down -v` against a database containing data that matters.
+> Do not mix the PostgreSQL foundation with the current Frappe MariaDB runtime when describing the application architecture.
 
 ---
 
-# 🎬 Hackathon Demo Flow
-
-The recommended five-minute demonstration is a complete business workflow.
+# 🧪 Verification Checklist
 
 ```text
-01  Open Employee
-        ↓
-02  Show Contract
-        ↓
-03  Show Working Schedule
-        ↓
-04  Show Attendance
-        ↓
-05  Show Time Off
-        ↓
-06  Open Payroll
-        ↓
-07  New Payrun
-        ↓
-08  Step 1 — Scope & Period
-        ↓
-09  Step 2 — Employee Selection
-        ↓
-10  Review Applicable Contracts
-        ↓
-11  Review Payroll Warnings
-        ↓
-12  Create Payrun
-        ↓
-13  Open Payrun Processing
-        ↓
-14  Compute / Review Payslips
-        ↓
-15  Validate
-        ↓
-16  Mark Paid
-        ↓
-17  Generate / Print Payslip
-        ↓
-18  Send Payslips
-        ↓
-19  Open Payroll Dashboard
+1. Start Docker
+      ↓
+2. Verify MariaDB
+      ↓
+3. Verify Redis
+      ↓
+4. Verify Frappe
+      ↓
+5. Verify PeoplePay360 workspace
+      ↓
+6. Seed / prepare demo data
+      ↓
+7. Verify Employee
+      ↓
+8. Verify Contract
+      ↓
+9. Verify Schedule
+      ↓
+10. Verify Attendance
+      ↓
+11. Verify Time Off
+      ↓
+12. Open Payrun Wizard
+      ↓
+13. Verify eligibility / warnings
+      ↓
+14. Create Payrun
+      ↓
+15. Process Salary Slips
+      ↓
+16. Validate / Pay
+      ↓
+17. Verify Payslip PDF
+      ↓
+18. Send Payslips
+      ↓
+19. Verify Dashboard
+      ↓
+20. Verify Assistant
 ```
 
-### What this demonstrates
+---
 
-- Employee-centric HR.
-- Contract awareness.
-- Attendance integration.
-- Time Off integration.
-- Explicit employee selection.
-- Payroll warnings.
-- Salary calculation.
-- Payslip processing.
-- Delivery.
-- Operational analytics.
+# 🎬 Hackathon Demo
+
+The strongest demo is one continuous business scenario rather than disconnected screens.
+
+## Recommended 5–7 minute flow
+
+```text
+01  Login
+     ↓
+02  PeoplePay360 Home
+     ↓
+03  Employee
+     ↓
+04  Contract + Working Schedule
+     ↓
+05  Attendance
+     ↓
+06  Time Off
+     ↓
+07  Payroll
+     ↓
+08  Payrun Wizard — Scope
+     ↓
+09  Employee Eligibility
+     ↓
+10  Warnings
+     ↓
+11  Explicit Employee Selection
+     ↓
+12  Create Payrun
+     ↓
+13  Payrun Processing
+     ↓
+14  Generate / Review Payslips
+     ↓
+15  Validate / Mark Paid
+     ↓
+16  PDF / Send Payslips
+     ↓
+17  Payroll Dashboard
+     ↓
+18  PeoplePay360 Assistant
+```
+
+## What judges should see
+
+### 1. Connected workflow
+
+```text
+Employee → Contract → Time → Compensation → Payroll
+```
+
+### 2. Payroll correctness
+
+```text
+Period
+  ↓
+Eligibility
+  ↓
+Warnings
+  ↓
+Processing
+```
+
+### 3. Security
+
+```text
+Authentication
+  ↓
+Role
+  ↓
+Permission
+  ↓
+Business Action
+```
+
+### 4. Scalability
+
+```text
+Redis Cache
++
+Redis Queue
++
+Background Workers
+```
+
+### 5. Operational visibility
+
+```text
+Payroll
+  ↓
+Dashboard
+  ↓
+KPIs + Trends + Alerts
+```
 
 ---
 
 # 🏆 Engineering Highlights
 
-| Area | Current Approach |
-|---|---|
-| Employee | Central HR record |
-| Contract | Historical/date-effective model |
-| Payrun | Two-step creation wizard |
-| Eligibility | Server-side employee lookup |
-| Contract Resolution | Applicable contract for payroll context |
-| Warnings | Payroll Processing + Dashboard |
-| Attendance | HRMS attendance + warning infrastructure |
-| Time Off | Existing leave allocation/request workflow |
-| Salary | Existing Salary Structure / Component engine |
-| Payslip | Existing Salary Slip infrastructure |
-| Dashboard | PeoplePay360 payroll dashboard |
-| Security | Frappe permissions + server checks |
-| Cache | Redis |
-| Background Work | Frappe background-job infrastructure |
-| Database Foundation | PostgreSQL 17 |
-| Connection Pooling | PgBouncer |
-| Data Integrity | PostgreSQL constraints/triggers |
-| Audit | PostgreSQL audit foundation |
-| CI/CD | GitHub Actions |
-| Runtime | Docker + Frappe Bench |
+## 1. Employee-to-Payroll Continuity
 
----
+Employee data is connected to contracts, schedules, attendance, Time Off, compensation and payroll.
 
-# 🧩 Why This Architecture?
+## 2. Guided Payroll UX
 
-Payroll is a high-risk business domain.
-
-Rebuilding authentication, employee records, leave management, salary calculation, permissions, PDF generation, accounting relationships and document lifecycle from scratch would create unnecessary complexity.
-
-PeoplePay360 therefore uses a layered strategy:
+Payroll creation is transformed from a generic record creation action into:
 
 ```text
-Mature Open-Source Platform
-            +
-PeoplePay360 Product Experience
-            +
-PeoplePay360 Business Rules
-            =
-Integrated HR & Payroll Platform
+Scope
+→ Eligibility
+→ Warning Context
+→ Selection
+→ Payrun
 ```
 
-The existing Frappe/ERPNext ecosystem provides the platform primitives.
+## 3. Period-Aware Contract Context
 
-PeoplePay360 focuses on:
+Payroll context is resolved against the selected payroll date/period rather than blindly using current configuration.
 
-- Connected workflows.
-- Payroll correctness.
-- Period-aware context.
-- Validation.
-- Warning visibility.
-- Employee selection.
-- Operational analytics.
-- Product-specific UX.
+## 4. Warning-Driven Operations
+
+The system surfaces missing or suspicious information before the payroll user completes the workflow.
+
+## 5. Live Dashboard
+
+Dashboard metrics are derived from operational records and combine HR and payroll context.
+
+## 6. Async Processing
+
+Real Frappe queue infrastructure keeps expensive payroll/attendance/email operations away from the interactive request where appropriate.
+
+## 7. Open-Source Reuse
+
+Mature HR, payroll, accounting, authentication, permission, print and background-job capabilities are reused instead of duplicated.
 
 ---
 
-# 📊 Current vs Planned
+# ⚖️ Architecture Trade-Offs
 
-## ✅ Implemented Today
+## Why Frappe / ERPNext / HRMS?
+
+### Advantages
+
+- Mature HR domain model.
+- Existing payroll engine.
+- Accounting integration.
+- Existing authentication and sessions.
+- Existing permission system.
+- Existing reporting.
+- Existing PDF / print infrastructure.
+- Existing background jobs.
+- Existing realtime infrastructure.
+
+### Trade-Off
+
+PeoplePay360 remains coupled to the Frappe/ERPNext ecosystem.
+
+### Decision
+
+For a payroll-heavy application, reusing mature financial and HR infrastructure reduces implementation risk and lets the project focus on the differentiated product layer.
+
+---
+
+# ⚡ Latency Strategy
+
+The interactive path should remain small.
+
+```text
+Request
+  ↓
+Permission / Validation
+  ↓
+Fast Read or Enqueue
+  ↓
+Immediate Response
+
+Expensive Work
+  ↓
+Worker
+```
+
+Redis supports both sides:
+
+```text
+Redis Cache  → repeated read optimization
+Redis Queue  → asynchronous processing
+Redis Realtime → push-style communication
+```
+
+---
+
+# 🧠 Correctness vs Performance
+
+Payroll is a financial workflow.
+
+Therefore:
+
+```text
+Correctness > Aggressive Caching
+```
+
+Redis must never become the permanent source of truth for payroll.
+
+```text
+MariaDB = Durable Business Data
+Redis   = Temporary / Fast / Coordination Layer
+```
+
+---
+
+# 📊 Performance Metrics
+
+The following are recommended production measurements, not claims of measured benchmark results from the hackathon repository.
+
+## Application
+
+- API p50/p95/p99 latency.
+- Request rate.
+- Error rate.
+- Dashboard latency.
+
+## Payroll
+
+- Employees processed per Payrun.
+- Salary Slip generation duration.
+- Payroll processing duration.
+- Payslip delivery success rate.
+- Warning count.
+- Failed payroll count.
+
+## Infrastructure
+
+- Redis cache hit ratio.
+- Queue depth.
+- Worker utilization.
+- Database query latency.
+- Background job duration.
+- Memory and CPU utilization.
+
+### Example future SLO targets
+
+| Metric | Example target |
+|---|---:|
+| Normal API p95 | < 300 ms |
+| Dashboard p95 | < 1 s |
+| Suitable cache hit ratio | > 80% |
+| Background job success | > 99% |
+| Payslip delivery success | > 99% |
+| Critical availability | > 99.9% |
+
+These are engineering targets for future production deployment, not measured results.
+
+---
+
+# 🧩 Requirement-to-Implementation Mapping
+
+| Requirement | Current approach |
+|---|---|
+| Employee management | Frappe HRMS Employee foundation |
+| Historical contracts | Employment Contract foundation + validation |
+| Working schedules | HRMS scheduling/shift foundation |
+| Attendance | HRMS attendance + check-in foundation |
+| Time Off | Leave Types / Allocations / Applications |
+| Salary structures | HRMS Salary Structure |
+| Salary rules/components | HRMS Salary Component |
+| Payrun | Payroll Entry + PeoplePay360 wizard |
+| Employee selection | PeoplePay360 Payrun Wizard |
+| Payroll warnings | PeoplePay360 validation/context layer |
+| Payrun processing | PeoplePay360 Processing page + HRMS payroll |
+| Payslips | Salary Slip + PeoplePay360 presentation |
+| PDF | Frappe print/PDF infrastructure |
+| Bulk email | Frappe asynchronous delivery infrastructure |
+| Dashboard | PeoplePay360 payroll dashboard |
+| Assistant | PeoplePay360 Assistant |
+| Cache | Frappe/Redis cache |
+| Background jobs | Redis-backed Frappe queues |
+| Realtime | Frappe realtime + Redis |
+| CI/CD | GitHub Actions |
+| SQL foundation | Independent PostgreSQL layer |
+
+---
+
+# 🧭 Current vs Planned
+
+## ✅ Current / Demonstrable
 
 ```text
 ✓ PeoplePay360 branding
-✓ HRMS foundation
-✓ Employee management foundation
-✓ Employment contracts
+✓ PeoplePay360 navigation/workspaces
+✓ Employee / HR foundation
+✓ Employment Contracts
+✓ Working Schedules / shifts
 ✓ Attendance
 ✓ Time Off
-✓ Salary Structures
-✓ Salary Components
-✓ Salary Structure Assignments
-✓ Two-step Payrun wizard
-✓ Employee eligibility lookup
-✓ Applicable contract lookup
-✓ Payrun Processing screen
-✓ Missing bank warnings
-✓ Duplicate payslip detection
+✓ Salary Structures / Components
+✓ Two-step Payrun Wizard
+✓ Server-side eligibility lookup
+✓ Contract-aware payroll context
+✓ Payroll warning information
+✓ Payrun Processing page
+✓ Salary Slip workflow
+✓ PeoplePay360 payslip presentation
+✓ Bulk payslip email queueing
 ✓ Payroll Dashboard
-✓ Payroll filters
-✓ Payroll KPIs
-✓ Department salary analysis
-✓ Attendance overview
-✓ Time Off overview
-✓ Payslip infrastructure
-✓ Bulk payslip email action
-✓ PostgreSQL foundation
-✓ PgBouncer configuration
-✓ Database integrity constraints
-✓ Database integration tests
-✓ CI/CD workflows
+✓ Payroll analytics / alerts
+✓ PeoplePay360 Assistant
+✓ Demo seed infrastructure
+✓ Redis cache / queue / realtime infrastructure
+✓ Docker environment
+✓ GitHub Actions CI
+✓ PostgreSQL foundation and SQL integrity tests
 ```
 
-## 🚧 Planned / Enhancement
+## 🚧 Planned / Future
 
 ```text
-□ Automated demo seed
-□ Contract amendment workflow
-□ Advanced payroll validation
-□ Detailed salary calculation trace UI
-□ Mobile self-service polish
-□ Cloudflare edge layer
-□ Nginx production rate limiting
-□ Prometheus/Grafana observability
-□ Advanced payroll forecasting
+□ Advanced payroll readiness scoring
+□ Advanced compliance validation
+□ Full contract amendment workflow
+□ Advanced salary calculation trace
 □ Payroll anomaly detection
-□ Advanced compliance automation
+□ Payroll forecasting
+□ Workforce cost forecasting
+□ Advanced mobile polish
+□ Cloudflare production edge
+□ Nginx production reverse proxy
+□ WAF / rate limiting
+□ Prometheus / Grafana observability
+□ Horizontal production scaling
+□ Advanced load testing
+□ PostgreSQL application integration if selected as an authoritative data layer
 ```
-
-> This separation is intentional: **implemented functionality represents the current repository; planned functionality represents the future roadmap.**
 
 ---
 
-# 🗺️ Roadmap
+# 🛣️ Roadmap
 
-## Phase 1 — Foundation
+## Phase 1 — Product Foundation
 
-- Stabilize current HRMS workflow.
-- Verify representative payroll data.
-- Maintain database integrity tests.
+```text
+✓ PeoplePay360 branding
+✓ HR / Payroll foundation
+✓ Payrun Wizard
+✓ Payrun Processing
+✓ Dashboard
+✓ Assistant
+✓ Demo environment
+```
 
 ## Phase 2 — Payroll Correctness
 
-- Improve contract resolution.
-- Expand payroll validation.
-- Improve duplicate protection.
-- Strengthen salary calculation validation.
+```text
+✓ Eligibility lookup
+✓ Contract validation
+✓ Duplicate checks
+✓ Warning context
 
-## Phase 3 — Product Experience
+Future:
+□ Advanced readiness scoring
+□ Advanced compliance validation
+```
 
-- Contract amendment workflow.
-- Better Payrun review.
-- Improved salary calculation trace.
-- Improved employee self-service.
+## Phase 3 — Experience
+
+```text
+✓ Guided payroll workflow
+✓ Custom payslip presentation
+✓ Dashboard
+✓ Assistant
+
+Future:
+□ Contract amendment workflow
+□ Calculation trace
+□ Mobile polish
+```
 
 ## Phase 4 — Production Hardening
 
-- Cloudflare.
-- Nginx.
-- Rate limiting.
-- Observability.
-- Performance testing.
-- Monitoring.
+```text
+□ Cloudflare
+□ Nginx
+□ WAF
+□ Rate limiting
+□ Horizontal scaling
+□ Load testing
+□ Observability
+```
 
 ## Phase 5 — Intelligent Operations
 
-- Payroll anomaly detection.
-- Forecasting.
-- Advanced analytics.
-- Intelligent HR insights.
+```text
+□ Payroll anomaly detection
+□ Forecasting
+□ Workforce cost intelligence
+□ Advanced HR copilot capabilities
+```
 
 ---
 
-# 🔮 Future Vision
+# 📚 Documentation Map
 
-PeoplePay360 can evolve into a broader HR operations platform with:
-
-- Employee self-service.
-- Advanced payroll forecasting.
-- Payroll anomaly detection.
-- Automated compliance workflows.
-- Workforce analytics.
-- Attendance intelligence.
-- Payroll cost forecasting.
-- Multi-company analytics.
-- Advanced workflow automation.
-
-These capabilities remain **future enhancements** unless implemented and verified in the repository.
+| File | Purpose |
+|---|---|
+| `main.md` | Problem statement, repository analysis and implementation analysis |
+| `PeoplePay360 HR & Payroll.md` | Product brief and acceptance requirements |
+| `PeoplePay360-ROADMAP.md` | Future enhancements and priorities |
+| `database/README.md` | PostgreSQL foundation, pooling, migrations and tests |
+| `SECURITY.md` | Security guidance |
+| `docker/docker-compose.yml` | Main development infrastructure |
+| `docker/init.sh` | Frappe / Redis environment initialization |
+| `hrms/hooks.py` | Application registration, integrations and hooks |
+| `hrms/payroll/page/payrun_wizard/` | Payrun Wizard |
+| `hrms/payroll/page/payrun_processing/` | Payrun Processing |
+| `hrms/payroll/page/payroll_dashboard/` | Payroll Dashboard |
+| `hrms/peoplepay360/chatbot/` | Assistant |
 
 ---
 
-# 📌 Project Philosophy
+# 🧠 Engineering Principles
 
-> **Connect HR decisions to payroll outcomes.**
+## Data Integrity
 
-An employee should not be treated as an isolated database record.
+Payroll decisions should use authoritative and validated records.
 
-Their:
+## Security by Default
+
+Server-side permissions are the security boundary.
+
+## Auditability
+
+Historical payroll should remain understandable and reproducible.
+
+## Idempotency
+
+Repeated operations should not silently create duplicate financial results.
+
+## Separation of Concerns
+
+PeoplePay360 product logic belongs in the product layer; mature platform primitives remain reusable.
+
+## Reuse Before Rebuild
+
+Do not duplicate authentication, payroll calculation, leave arithmetic, accounting, PDF rendering or generic document lifecycle behavior without a proven requirement.
+
+---
+
+# 🚫 What Not to Do
+
+- Do not create a second Employee master when the Frappe Employee model already satisfies the requirement.
+- Do not create a second authentication system.
+- Do not rely only on frontend filters for sensitive authorization.
+- Do not overwrite historical contracts to represent new terms.
+- Do not create a parallel salary formula engine unless the existing one is demonstrably insufficient.
+- Do not treat Redis as the permanent payroll database.
+- Do not mark payroll as paid merely because Salary Slips were generated.
+- Do not use dashboard calculations with different period definitions from payroll.
+- Do not commit real credentials or `.env` secrets.
+- Do not describe planned Cloudflare/Nginx/observability infrastructure as already deployed.
+- Do not describe the independent PostgreSQL foundation as the current Frappe runtime database.
+
+---
+
+# 🏆 Hackathon Evaluation Mapping
+
+| Evaluation area | PeoplePay360 response |
+|---|---|
+| Problem understanding | Connected HR-to-payroll workflow |
+| Functional depth | Employee + Contract + Time + Compensation + Payroll |
+| UX | Guided Payrun Wizard + Processing page |
+| Validation | Contract, salary, attendance and duplicate context |
+| Security | Frappe authentication + RBAC + server-side permissions |
+| Scalability | Redis cache, queue, workers and Docker topology |
+| Analytics | Payroll Dashboard |
+| Intelligence | PeoplePay360 Assistant |
+| Testing | Frappe tests + Payrun Wizard tests + SQL foundation tests |
+| DevOps | Docker + GitHub Actions |
+| Extensibility | Frappe / ERPNext extension architecture |
+| Demonstrability | Seed/demo workflow + continuous end-to-end scenario |
+
+---
+
+# 💎 Product USP
+
+## Connected HR-to-Payroll Operations
 
 ```text
 Employee
-   ↓
+  ↓
 Employment
-   ↓
-Contract
-   ↓
-Schedule
-   ↓
-Attendance + Time Off
-   ↓
-Salary Configuration
-   ↓
+  ↓
+Time
+  ↓
+Compensation
+  ↓
 Payroll
-   ↓
+  ↓
 Payslip
-   ↓
-Payment
+  ↓
+Insight
 ```
 
-should form a coherent operational chain.
+## Guided Payrun
 
-PeoplePay360 focuses on making that chain more visible, validated, secure and operationally useful.
+```text
+Scope
+→ Eligibility
+→ Warnings
+→ Selection
+→ Processing
+→ Payslip
+```
+
+## Operational Visibility
+
+```text
+Payroll
+  +
+Attendance
+  +
+Time Off
+  +
+Contracts
+  +
+Employees
+  ↓
+Dashboard
+```
+
+## Scalable Infrastructure
+
+```text
+Frappe / Python
+      │
+ ┌────┼────┐
+ ▼    ▼    ▼
+DB  Redis Workers
+```
 
 ---
 
-# 👥 Team
+# 📌 Final System Summary
 
-## PeoplePay360
+```text
+                         PEOPLEPAY360
+                              │
+                              ▼
+                    CONNECTED HR OPERATIONS
+                              │
+        ┌─────────────────────┼─────────────────────┐
+        ▼                     ▼                     ▼
+       HR                  PAYROLL             INTELLIGENCE
+        │                     │                     │
+   Employee               Payrun                Assistant
+   Contract               Eligibility           Context
+   Schedule               Warnings               Role-aware
+   Attendance             Processing
+   Time Off               Payslip
+                          Payment
+        │                     │                     │
+        └─────────────────────┼─────────────────────┘
+                              ▼
+                         DASHBOARD
+                              │
+                     KPIs + Trends + Alerts
+```
 
-**HR & Payroll Operations Platform**
+The overall architecture can be summarized in one sentence:
 
-Built for the hackathon with a focus on:
-
-**Business Logic · System Design · Security · Scalability · Data Integrity · Auditability · User Experience**
+> **Frappe/Python handles HR and payroll business logic and permissions, MariaDB remains the durable operational source of truth, Redis accelerates suitable reads and coordinates asynchronous/realtime work, and the PeoplePay360 product layer provides the connected Payrun, validation, dashboard and assistant experience.**
 
 ---
 
 # 📜 License
 
-This project is developed as a hackathon implementation using the applicable open-source Frappe, ERPNext and Frappe HR ecosystem.
+This repository follows the license included in:
 
-Refer to the repository's license files and applicable upstream project licenses for licensing terms.
+```text
+license.txt
+```
+
+The project builds on the Frappe / ERPNext / Frappe HR ecosystem; refer to the relevant upstream projects for their respective licenses and notices.
 
 ---
 
-<div align="center">
+# 💚 PeoplePay360
 
-## PeoplePay360
+<p align="center"><strong>Connect HR. Simplify Payroll. Improve Operational Visibility.</strong></p>
 
-### Connect HR. Simplify Payroll. Improve Operational Visibility.
+<p align="center">Employee → Contract → Time → Compensation → Payroll → Payslip → Insight</p>
 
-**Built with a focus on correctness, security and scalable system design.**
-
-</div>
+<p align="center"><strong>Built as a product-focused HR & Payroll Operations Platform on an open-source ERP foundation.</strong></p>
