@@ -1,13 +1,14 @@
 (function () {
-	const landing_route = "/desk/peoplepay360";
-	const launcher_routes = new Set(["/apps", "/app", "/app/", "/desk", "/desk/"]);
+	function resolve_home() {
+		// Single product home for every role — sidebar filters by capability
+		return "/desk/peoplepay360";
+	}
 
-	function redirect_to_peoplepay360() {
-		if (launcher_routes.has(window.location.pathname)) {
-			window.location.replace(landing_route);
-			return true;
-		}
-		return false;
+	function redirect_by_role() {
+		const launcher = new Set(["/apps", "/app", "/app/", "/desk", "/desk/"]);
+		if (!launcher.has(window.location.pathname)) return false;
+		window.location.replace(resolve_home());
+		return true;
 	}
 
 	function hide_legacy_app_tiles() {
@@ -20,9 +21,8 @@
 		});
 	}
 
-	if (redirect_to_peoplepay360()) return;
+	if (redirect_by_role()) return;
 
-	// Keep the launcher clean if the route was rendered before this script ran.
 	if (window.location.pathname === "/apps") {
 		if (!document.body) return;
 		hide_legacy_app_tiles();

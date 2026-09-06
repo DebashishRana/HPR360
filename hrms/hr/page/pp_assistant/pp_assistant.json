@@ -1,0 +1,24 @@
+{
+ "content": null,
+ "creation": "2026-09-06 00:00:00",
+ "docstatus": 0,
+ "doctype": "Page",
+ "idx": 0,
+ "modified": "2026-09-06 00:00:00",
+ "modified_by": "Administrator",
+ "module": "HR",
+ "name": "pp-assistant",
+ "owner": "Administrator",
+ "page_name": "pp-assistant",
+ "roles": [
+  {"role": "HR Manager"},
+  {"role": "HR User"},
+  {"role": "HR Payroll User"},
+  {"role": "HR Payroll Manager"},
+  {"role": "System Manager"},
+  {"role": "Employee"}
+ ],
+ "standard": "Yes",
+ "system_page": 0,
+ "title": "PeoplePay360 Assistant"
+}

@@ -222,6 +222,83 @@ function notify_assignment_created(action, doc) {
 	});
 }
 
+function open_employee_filtered_list(doctype, employee, extra_filters = {}) {
+	frappe.route_options = { employee, ...extra_filters };
+	frappe.set_route("List", doctype);
+}
+
+async function load_employee_related_actions(frm) {
+	const employee = frm.doc.name;
+	const links = [
+		{
+			doctype: "Employment Contract",
+			label: __("Contracts"),
+			filters: { employee },
+			group: __("Related Records"),
+		},
+		{
+			doctype: "Attendance",
+			label: __("Attendance"),
+			filters: { employee },
+			group: __("Related Records"),
+		},
+		{
+			doctype: "Leave Application",
+			label: __("Time Off"),
+			filters: { employee },
+			group: __("Related Records"),
+		},
+		{
+			doctype: "Leave Allocation",
+			label: __("Allocations"),
+			filters: { employee },
+			group: __("Related Records"),
+		},
+		{
+			doctype: "Working Schedule Assignment",
+			label: __("Schedules"),
+			filters: { employee },
+			group: __("Related Records"),
+		},
+		{
+			doctype: "Salary Slip",
+			label: __("Payslips"),
+			filters: { employee },
+			group: __("Related Records"),
+		},
+	];
+
+	for (const link of links) {
+		if (!frappe.model.can_read(link.doctype)) continue;
+		let count = 0;
+		try {
+			count = await frappe.db.count(link.doctype, { filters: link.filters });
+		} catch (e) {
+			count = 0;
+		}
+		frm.add_custom_button(
+			`${link.label} (${count})`,
+			() => open_employee_filtered_list(link.doctype, employee),
+			link.group,
+		);
+	}
+
+	if (frappe.model.can_create("Employment Contract")) {
+		frm.add_custom_button(
+			__("New Contract"),
+			() => {
+				frappe.new_doc("Employment Contract", {
+					employee: frm.doc.name,
+					department: frm.doc.department,
+					position: frm.doc.designation,
+					company: frm.doc.company,
+				});
+			},
+			__("Create"),
+		);
+	}
+}
+
 function load_employee_profile(frm) {
 	if (frm.is_new()) return;
 	frappe.call({
@@ -266,11 +343,8 @@ frappe.ui.form.on("Employee", {
 			});
 			frm.__pp360_profile_interval = setInterval(() => load_employee_profile(frm), 60000);
 		}
-		if (!frm.is_new() && frappe.model.can_read("Employment Contract")) {
-			frm.add_custom_button(__("Contract History"), () => {
-				frappe.route_options = { employee: frm.doc.name };
-				frappe.set_route("List", "Employment Contract");
-			});
+		if (!frm.is_new()) {
+			load_employee_related_actions(frm);
 		}
 		frm.set_query("payroll_cost_center", function () {
 			return {

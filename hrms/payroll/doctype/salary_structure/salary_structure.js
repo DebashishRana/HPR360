@@ -118,6 +118,7 @@ frappe.ui.form.on("Salary Structure", {
 	refresh: function (frm) {
 		frm.trigger("set_dynamic_labels");
 		frm.trigger("toggle_fields");
+		frm.trigger("show_structure_summary");
 		frm.fields_dict["earnings"].grid.set_column_disp("default_amount", false);
 		frm.fields_dict["deductions"].grid.set_column_disp("default_amount", false);
 
@@ -177,6 +178,31 @@ frappe.ui.form.on("Salary Structure", {
 			frm.fields_dict.deductions.grid.update_docfield_property(field, "read_only", 1);
 		});
 		frm.trigger("set_earning_deduction_component");
+	},
+
+	show_structure_summary: function (frm) {
+		if (frm.is_new()) return;
+		const earnings = (frm.doc.earnings || []).length;
+		const deductions = (frm.doc.deductions || []).length;
+		frappe.db
+			.count("Salary Structure Assignment", {
+				filters: { salary_structure: frm.doc.name, docstatus: 1 },
+			})
+			.then((assigned) => {
+				frm.dashboard.add_comment(
+					__(
+						"{0} salary rules (earnings) · {1} deductions · {2} employees assigned · Status: {3}",
+						[
+							earnings,
+							deductions,
+							assigned || 0,
+							frm.doc.is_active === "Yes" ? __("Active") : __("Inactive"),
+						],
+					),
+					frm.doc.is_active === "Yes" ? "blue" : "orange",
+					true,
+				);
+			});
 	},
 
 	salary_slip_based_on_timesheet: function (frm) {

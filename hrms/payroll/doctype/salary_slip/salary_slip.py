@@ -922,6 +922,33 @@ class SalarySlip(TransactionBase):
 				)
 			)
 
+		self.apply_period_employment_contract()
+
+	def apply_period_employment_contract(self):
+		"""Prefer the Employment Contract that covers this payslip period for wage/base."""
+		if not self.employee or not self.start_date or not self.end_date:
+			return
+		if not frappe.db.exists("DocType", "Employment Contract"):
+			return
+
+		from hrms.hr.doctype.employment_contract.employment_contract import get_contract_for_period
+
+		try:
+			contract = get_contract_for_period(self.employee, self.start_date, self.end_date)
+		except frappe.ValidationError:
+			raise
+
+		if not contract:
+			return
+
+		self._employment_contract = contract
+		# Contract wage drives formula context (base) when present.
+		if flt(contract.wage):
+			self._salary_structure_assignment.base = flt(contract.wage)
+		# Prefer contract-linked structure when it matches an active assignment context.
+		if contract.salary_structure and not self.salary_structure:
+			self.salary_structure = contract.salary_structure
+
 	def calculate_net_pay(self, skip_tax_breakup_computation: bool = False):
 		def set_gross_pay_and_base_gross_pay():
 			self.gross_pay = self.get_component_totals("earnings", depends_on_payment_days=1)
@@ -2289,13 +2316,24 @@ class SalarySlip(TransactionBase):
 
 		if receiver:
 			posting_date = getdate(self.posting_date)
+			print_format = (
+				"PeoplePay360 Payslip"
+				if frappe.db.exists("Print Format", "PeoplePay360 Payslip")
+				else None
+			)
 			email_args = {
 				"sender": payroll_settings.sender_email,
 				"recipients": [receiver],
 				"message": message,
 				"subject": subject,
 				"attachments": [
-					frappe.attach_print(self.doctype, self.name, file_name=self.name, password=password)
+					frappe.attach_print(
+						self.doctype,
+						self.name,
+						file_name=self.name,
+						print_format=print_format,
+						password=password,
+					)
 				],
 				"reference_doctype": self.doctype,
 				"reference_name": self.name,

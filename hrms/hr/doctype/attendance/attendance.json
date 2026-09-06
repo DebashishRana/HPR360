@@ -81,6 +81,7 @@
    "depends_on": "working_hours",
    "fieldname": "working_hours",
    "fieldtype": "Float",
+   "in_list_view": 1,
    "label": "Working Hours",
    "precision": "2",
    "read_only": 1
@@ -198,14 +199,16 @@
    "depends_on": "shift",
    "fieldname": "in_time",
    "fieldtype": "Datetime",
-   "label": "In Time",
+   "in_list_view": 1,
+   "label": "Check In",
    "read_only": 1
   },
   {
    "depends_on": "shift",
    "fieldname": "out_time",
    "fieldtype": "Datetime",
-   "label": "Out Time",
+   "in_list_view": 1,
+   "label": "Check Out",
    "read_only": 1
   },
   {

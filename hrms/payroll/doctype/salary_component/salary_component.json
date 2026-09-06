@@ -13,6 +13,7 @@
   "salary_component",
   "salary_component_abbr",
   "type",
+  "category",
   "description",
   "column_break_4",
   "depends_on_payment_days",
@@ -71,6 +72,14 @@
    "label": "Type",
    "options": "Earning\nDeduction\nEmployer Contribution",
    "reqd": 1
+  },
+  {
+   "fieldname": "category",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Category",
+   "options": "\nBasic\nAllowance\nGross\nDeduction\nNet\nEmployer Contribution\nOther"
   },
   {
    "default": "1",

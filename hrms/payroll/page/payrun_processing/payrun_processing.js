@@ -50,13 +50,17 @@ function render_empty_state(page) {
 		<div class="text-center text-muted" style="padding: 100px 20px;">
 			<h3>${__("Select a payrun to begin processing")}</h3>
 			<p>${__("Choose a Payroll Entry above to see its progress and available actions.")}</p>
+			<button class="btn btn-primary mt-3" id="pp360-open-wizard">${__("Start Payrun Wizard")}</button>
 		</div>
 	`);
+	page.main.find("#pp360-open-wizard").on("click", () => frappe.set_route("payrun-wizard"));
 }
 
 function render_payrun(page, data) {
 	const entry = data.payroll_entry;
 	const counts = data.counts;
+	const slips = data.salary_slips || [];
+	const warnings = data.warnings || [];
 	const status = entry.status || __("Draft");
 	const status_class = {
 		Draft: "red",
@@ -68,10 +72,11 @@ function render_payrun(page, data) {
 
 	page.clear_inner_toolbar();
 	page.main.html(`
-		<div class="payrun-processing-header mb-4">
+		<div class="payrun-processing-header mb-4 d-flex justify-content-between align-items-start">
 			<div>
 				<h2 class="mb-1">${frappe.utils.escape_html(entry.name)}</h2>
-				<div class="text-muted">${frappe.utils.escape_html(entry.company || "")} - ${frappe.utils.escape_html(entry.start_date || "")} - ${frappe.utils.escape_html(entry.end_date || "")}</div>
+				<div class="text-muted">${frappe.utils.escape_html(entry.company || "")} · ${frappe.utils.escape_html(entry.start_date || "")} → ${frappe.utils.escape_html(entry.end_date || "")}</div>
+				<div class="text-muted mt-1">${__("Structure filter / frequency")}: ${frappe.utils.escape_html(entry.payroll_frequency || __("Timesheet"))}</div>
 			</div>
 			<span class="indicator-pill ${status_class}">${frappe.utils.escape_html(status)}</span>
 		</div>
@@ -79,7 +84,7 @@ function render_payrun(page, data) {
 			${render_stat(__("Employees"), counts.employees)}
 			${render_stat(__("Salary Slips"), counts.salary_slips)}
 			${render_stat(__("Submitted Slips"), counts.submitted_salary_slips)}
-			${render_stat(__("Bank Entries"), counts.bank_entries)}
+			${render_stat(__("Warnings"), counts.warnings || warnings.length)}
 		</div>
 		<div class="card mt-4">
 			<div class="card-body">
@@ -91,18 +96,24 @@ function render_payrun(page, data) {
 				${entry.error_message ? `<div class="alert alert-danger mt-3">${frappe.utils.escape_html(entry.error_message)}</div>` : ""}
 			</div>
 		</div>
+		${render_warnings(warnings)}
+		${render_payslip_table(slips)}
 	`);
 
-	const actions = page.add_inner_button(__("Open Payroll Entry"), () => {
+	page.main.find("[data-slip]").on("click", function (e) {
+		e.preventDefault();
+		frappe.set_route("Form", "Salary Slip", $(this).data("slip"));
+	});
+
+	page.add_inner_button(__("Open Payroll Entry"), () => {
 		frappe.set_route("Form", "Payroll Entry", entry.name);
 	});
-	actions.addClass("btn-secondary");
 
 	if (!entry.salary_slips_created && entry.docstatus !== 2) {
-		page.add_inner_button(__("Compute Salary Slips"), () => compute_salary_slips(page, entry));
+		page.add_inner_button(__("Compute"), () => compute_salary_slips(page, entry));
 	}
 	if (entry.salary_slips_created && !entry.salary_slips_submitted && entry.docstatus !== 2) {
-		page.add_inner_button(__("Validate & Submit Slips"), () => {
+		page.add_inner_button(__("Validate"), () => {
 			frappe.confirm(
 				__("Submit salary slips and create the accrual journal entry?"),
 				() => run_doc_method(page, entry, "submit_salary_slips"),
@@ -110,7 +121,7 @@ function render_payrun(page, data) {
 		});
 	}
 	if (entry.salary_slips_submitted && !counts.bank_entries && entry.docstatus !== 2) {
-		page.add_inner_button(__("Mark Paid / Make Bank Entry"), () => make_bank_entry(page, entry));
+		page.add_inner_button(__("Mark Paid"), () => make_bank_entry(page, entry));
 	}
 	if (entry.salary_slips_submitted && entry.docstatus !== 2) {
 		page.add_inner_button(__("Send Payslips"), () => send_payslips(page, entry));
@@ -123,6 +134,45 @@ function render_stat(label, value) {
 
 function render_check(label, complete) {
 	return `<div class="d-flex align-items-center py-2"><span class="indicator ${complete ? "green" : "orange"} mr-2"></span>${__(label)}</div>`;
+}
+
+function render_warnings(warnings) {
+	if (!warnings.length) {
+		return `<div class="card mt-4"><div class="card-body"><h4>${__("Warnings")}</h4><div class="text-muted">${__("No payroll warnings for this batch.")}</div></div></div>`;
+	}
+	const rows = warnings
+		.map(
+			(w) =>
+				`<div class="d-flex justify-content-between border-bottom py-2"><span><span class="indicator-pill ${w.severity === "Blocking" ? "red" : "orange"} mr-2">${frappe.utils.escape_html(w.severity || "Review")}</span>${frappe.utils.escape_html(w.message || "")}</span><code>${frappe.utils.escape_html(w.employee || "")}</code></div>`,
+		)
+		.join("");
+	return `<div class="card mt-4"><div class="card-body"><h4>${__("Warnings")}</h4>${rows}</div></div>`;
+}
+
+function render_payslip_table(slips) {
+	if (!slips.length) {
+		return `<div class="card mt-4"><div class="card-body"><h4>${__("Payslips")}</h4><div class="text-muted">${__("No payslips generated yet. Use Compute to create them.")}</div></div></div>`;
+	}
+	const rows = slips
+		.map((slip) => {
+			const status = slip.docstatus === 1 ? __("Submitted") : slip.docstatus === 2 ? __("Cancelled") : __("Draft");
+			return `<tr>
+				<td><a href="#" data-slip="${frappe.utils.escape_html(slip.name)}">${frappe.utils.escape_html(slip.name)}</a></td>
+				<td>${frappe.utils.escape_html(slip.employee_name || slip.employee)}</td>
+				<td>${frappe.utils.escape_html(slip.salary_structure || "—")}</td>
+				<td>${Number(slip.payment_days || 0)}</td>
+				<td>${format_currency(slip.gross_pay || 0, slip.currency)}</td>
+				<td>${format_currency(slip.total_deduction || 0, slip.currency)}</td>
+				<td>${format_currency(slip.net_pay || 0, slip.currency)}</td>
+				<td>${status}</td>
+			</tr>`;
+		})
+		.join("");
+	return `<div class="card mt-4"><div class="card-body"><h4>${__("Payslips")}</h4>
+		<div class="table-responsive"><table class="table table-bordered">
+			<thead><tr><th>${__("Payslip")}</th><th>${__("Employee")}</th><th>${__("Structure")}</th><th>${__("Days")}</th><th>${__("Gross")}</th><th>${__("Deductions")}</th><th>${__("Net")}</th><th>${__("Status")}</th></tr></thead>
+			<tbody>${rows}</tbody>
+		</table></div></div></div>`;
 }
 
 function run_doc_method(page, entry, method) {
@@ -172,7 +222,7 @@ function send_payslips(page, entry) {
 			method: "hrms.payroll.doctype.payroll_entry.payroll_entry.send_payrun_payslips",
 			args: { payroll_entry: entry.name },
 			freeze: true,
-			freeze_message: __("Queueing payslips...")
+			freeze_message: __("Queueing payslips..."),
 		}).then((r) => {
 			if (r.message) frappe.msgprint(__("{0} payslips queued for delivery.", [r.message.queued]));
 		});

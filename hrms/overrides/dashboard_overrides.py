@@ -58,14 +58,13 @@ def get_dashboard_for_employee(data):
 				"items": ["Training Event", "Training Result", "Training Feedback", "Employee Skill Map"],
 			},
 			{"label": _("Evaluation"), "items": ["Appraisal"]},
-			{"label": _("Contract"), "items": ["Contract"]},
+			{"label": _("Contracts & Schedule"), "items": ["Employment Contract", "Working Schedule Assignment"]},
 		]
 	)
 
 	data["non_standard_fieldnames"].update(
 		{
 			"Bank Account": "party",
-			"Contract": "party_name",
 			"Employee Grievance": "raised_by",
 			"Holiday List Assignment": "assigned_to",
 		}
@@ -74,7 +73,6 @@ def get_dashboard_for_employee(data):
 	if not data.get("dynamic_links"):
 		data["dynamic_links"] = {}
 	data["dynamic_links"]["assigned_to"] = ["Employee", "applicable_for"]
-	data["dynamic_links"]["party_name"] = ["Employee", "party_type"]
 	data.update(
 		{
 			"heatmap": True,

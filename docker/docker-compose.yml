@@ -1,4 +1,3 @@
-version: "3.8" # Updated version
 services:
   mariadb:
     image: mariadb:10.8
@@ -6,7 +5,7 @@ services:
       - --character-set-server=utf8mb4
       - --collation-server=utf8mb4_unicode_ci
       - --skip-character-set-client-handshake
-      - --skip-innodb-read-only-compressed # Temporary fix for MariaDB 10.6
+      - --skip-innodb-read-only-compressed
     environment:
       MYSQL_ROOT_PASSWORD: 123
     volumes:
@@ -17,15 +16,21 @@ services:
 
   frappe:
     image: frappe/bench:latest
+    user: root
     command: bash /workspace/init.sh
     environment:
       - SHELL=/bin/bash
+      - HOME=/home/frappe
     working_dir: /home/frappe
     volumes:
       - .:/workspace
+      - ../:/workspace/hpr360
+      # Parent mount so bench init can create frappe-bench/ without moving a venv
+      - frappe-bench-data:/home/frappe/benches
     ports:
       - 8000:8000
       - 9000:9000
 
 volumes:
   mariadb-data:
+  frappe-bench-data:

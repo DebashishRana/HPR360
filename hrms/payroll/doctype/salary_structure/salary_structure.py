@@ -457,6 +457,38 @@ def get_employees(salary_structure: str) -> list[str]:
 
 
 @frappe.whitelist()
+def get_structure_list_stats() -> dict:
+	"""Return rule + assigned-employee counts keyed by Salary Structure name."""
+	stats = {}
+	for name in frappe.get_all("Salary Structure", pluck="name"):
+		stats[name] = {"rules": 0, "employees": 0}
+
+	for row in frappe.db.sql(
+		"""
+		select parent, count(*) as cnt
+		from `tabSalary Detail`
+		where parenttype = 'Salary Structure'
+		group by parent
+		""",
+		as_dict=True,
+	):
+		stats.setdefault(row.parent, {"rules": 0, "employees": 0})["rules"] = cint(row.cnt)
+
+	for row in frappe.db.sql(
+		"""
+		select salary_structure, count(distinct employee) as cnt
+		from `tabSalary Structure Assignment`
+		where docstatus = 1
+		group by salary_structure
+		""",
+		as_dict=True,
+	):
+		stats.setdefault(row.salary_structure, {"rules": 0, "employees": 0})["employees"] = cint(row.cnt)
+
+	return stats
+
+
+@frappe.whitelist()
 def get_salary_component(
 	doctype: str, txt: str, searchfield: str, start: int, page_len: int, filters: dict
 ) -> list:

@@ -1,6 +1,6 @@
 {
  "actions": [], "allow_rename": 1, "autoname": "format:EC-{#####}", "doctype": "DocType",
- "field_order": ["employee", "employee_name", "status", "contract_type", "start_date", "end_date", "department", "position", "salary_structure", "wage", "currency", "terms"],
+ "field_order": ["employee", "employee_name", "status", "contract_type", "start_date", "end_date", "department", "position", "working_schedule", "salary_structure", "wage", "currency", "terms"],
  "fields": [
   {"fieldname":"employee","fieldtype":"Link","in_list_view":1,"label":"Employee","options":"Employee","reqd":1},
   {"fetch_from":"employee.employee_name","fieldname":"employee_name","fieldtype":"Data","label":"Employee Name","read_only":1},
@@ -10,6 +10,7 @@
   {"fieldname":"end_date","fieldtype":"Date","in_list_view":1,"label":"End Date"},
   {"fieldname":"department","fieldtype":"Link","in_list_view":1,"label":"Department","options":"Department","reqd":1},
   {"fieldname":"position","fieldtype":"Link","in_list_view":1,"label":"Position","options":"Designation","reqd":1},
+  {"fieldname":"working_schedule","fieldtype":"Link","label":"Working Schedule","options":"Working Schedule","description":"Standard weekly pattern for attendance and payroll expectations"},
   {"fieldname":"salary_structure","fieldtype":"Link","in_list_view":1,"label":"Salary Structure","options":"Salary Structure"},
   {"fieldname":"wage","fieldtype":"Currency","in_list_view":1,"label":"Wage","reqd":1},
   {"fieldname":"currency","fieldtype":"Link","label":"Currency","options":"Currency","reqd":1},
@@ -17,6 +18,9 @@
  ],
  "module":"HR", "name":"Employment Contract", "permissions":[
   {"create":1,"delete":1,"read":1,"role":"HR Manager","write":1},
-  {"create":1,"read":1,"role":"HR User","write":1}, {"read":1,"role":"Employee"}
+  {"create":1,"delete":1,"read":1,"role":"HR Payroll Manager","write":1},
+  {"create":1,"read":1,"role":"HR Payroll User","write":1},
+  {"create":1,"read":1,"role":"HR User","write":1},
+  {"read":1,"role":"Employee"}
  ], "sort_field":"start_date", "sort_order":"DESC", "title_field":"employee_name", "track_changes":1
 }

@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<title>PeoplePay360 · Sign In</title>
+	<style>
+		* { box-sizing: border-box; }
+		html, body {
+			margin: 0;
+			min-height: 100%;
+			background: #fff;
+			color: #111;
+			font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+		}
+		.wrap {
+			min-height: 100vh;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			padding: 24px 16px;
+		}
+		.card {
+			width: 100%;
+			max-width: 420px;
+		}
+		.brand {
+			text-align: center;
+			margin-bottom: 28px;
+		}
+		.logo {
+			width: 40px;
+			height: 40px;
+			margin: 0 auto 10px;
+			background: #111;
+			color: #fff;
+			border-radius: 8px;
+			display: grid;
+			place-items: center;
+			font-weight: 700;
+			font-size: 14px;
+		}
+		.brand h1 {
+			margin: 0;
+			font-size: 22px;
+			font-weight: 650;
+		}
+		.brand p {
+			margin: 6px 0 0;
+			font-size: 13px;
+			color: #666;
+		}
+		.roles {
+			display: grid;
+			grid-template-columns: 1fr 1fr;
+			gap: 8px;
+			margin-bottom: 16px;
+		}
+		.role {
+			appearance: none;
+			background: #fff;
+			border: 1px solid #ddd;
+			border-radius: 8px;
+			padding: 10px;
+			text-align: left;
+			cursor: pointer;
+		}
+		.role:hover { border-color: #999; }
+		.role.active {
+			border-color: #111;
+			background: #111;
+			color: #fff;
+		}
+		.role .lbl { font-size: 13px; font-weight: 600; display: block; }
+		.role .dsc { font-size: 11px; opacity: 0.75; margin-top: 3px; line-height: 1.3; }
+		.hint {
+			font-size: 12px;
+			color: #444;
+			background: #f7f7f7;
+			border: 1px solid #e8e8e8;
+			border-radius: 8px;
+			padding: 10px 12px;
+			margin-bottom: 14px;
+		}
+		.hint .key {
+			font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+			font-weight: 600;
+			color: #111;
+			text-decoration: none;
+		}
+		label {
+			display: block;
+			font-size: 12px;
+			font-weight: 600;
+			margin-bottom: 4px;
+		}
+		.field { margin-bottom: 12px; }
+		input {
+			width: 100%;
+			border: 1px solid #ccc;
+			border-radius: 8px;
+			padding: 10px 12px;
+			font: inherit;
+			background: #fff;
+			text-decoration: none;
+		}
+		input:focus {
+			outline: none;
+			border-color: #111;
+		}
+		.error {
+			min-height: 18px;
+			color: #b00020;
+			font-size: 13px;
+			margin: 0 0 8px;
+		}
+		button.submit {
+			width: 100%;
+			border: 0;
+			border-radius: 8px;
+			padding: 11px 14px;
+			background: #111;
+			color: #fff;
+			font: inherit;
+			font-weight: 600;
+			cursor: pointer;
+		}
+		button.submit:disabled { opacity: 0.6; cursor: wait; }
+		.foot {
+			margin-top: 14px;
+			text-align: center;
+			font-size: 12px;
+			color: #888;
+		}
+		@media (max-width: 480px) {
+			.roles { grid-template-columns: 1fr; }
+		}
+	</style>
+</head>
+<body>
+	<div class="wrap">
+		<div class="card">
+			<div class="brand">
+				<div class="logo">PP</div>
+				<h1>PeoplePay360</h1>
+				<p>Choose a role to autofill demo login</p>
+			</div>
+
+			<div class="roles" id="pp-roles"></div>
+			<div class="hint" id="pp-hint">Select a role</div>
+			<div class="error" id="pp-error"></div>
+
+			<form id="pp-login-form">
+				<div class="field">
+					<label for="pp-email">Email</label>
+					<input id="pp-email" type="email" autocomplete="username" required />
+				</div>
+				<div class="field">
+					<label for="pp-password">Password</label>
+					<input id="pp-password" type="password" autocomplete="current-password" required />
+				</div>
+				<button class="submit" type="submit" id="pp-submit">Continue</button>
+			</form>
+			<div class="foot">Role-based demo access</div>
+		</div>
+	</div>
+
+	<script>
+	(async function () {
+		const fallback = [
+			{id:'employee', label:'Employee', description:'Own profile, attendance & time off', email:'alex.employee@example.com', password:'Emp@360!', home:'/desk/peoplepay360'},
+			{id:'hr_manager', label:'HR Manager', description:'People, contracts, schedules, leave', email:'hr.manager@example.com', password:'HrMgr@360!', home:'/desk/peoplepay360'},
+			{id:'payroll_user', label:'HR Payroll User', description:'HR + payruns & payslips', email:'payroll.user@example.com', password:'PayUser@360!', home:'/desk/peoplepay360'},
+			{id:'payroll_manager', label:'HR Payroll Manager', description:'Full HR & payroll', email:'payroll.manager@example.com', password:'PayMgr@360!', home:'/desk/peoplepay360'},
+			{id:'admin', label:'Admin', description:'Full system administration', email:'admin.pp@example.com', password:'Admin@360!', home:'/desk/peoplepay360'}
+		];
+		let roles = fallback;
+		try {
+			const r = await fetch('/api/method/hrms.peoplepay360.roles.get_demo_role_logins');
+			const j = await r.json();
+			if (j.message && j.message.roles && j.message.roles.length) {
+				roles = j.message.roles.map(function (role) {
+					return Object.assign({ home: '/desk/peoplepay360' }, role);
+				});
+			}
+		} catch (e) {}
+
+		const box = document.getElementById('pp-roles');
+		const email = document.getElementById('pp-email');
+		const password = document.getElementById('pp-password');
+		const hint = document.getElementById('pp-hint');
+		const err = document.getElementById('pp-error');
+		const submitBtn = document.getElementById('pp-submit');
+		let selected = roles[0];
+
+		function apply() {
+			email.value = selected.email;
+			password.value = selected.password;
+			// Use textContent only — never HTML that browsers style as struck-through
+			hint.textContent = '';
+			hint.appendChild(document.createTextNode(selected.label + ' · '));
+			const key = document.createElement('span');
+			key.className = 'key';
+			key.textContent = selected.password;
+			hint.appendChild(key);
+			submitBtn.textContent = 'Continue as ' + selected.label;
+		}
+
+		function paint() {
+			box.innerHTML = '';
+			roles.forEach(function (role) {
+				const b = document.createElement('button');
+				b.type = 'button';
+				b.className = 'role' + (role.id === selected.id ? ' active' : '');
+				b.innerHTML = '<span class="lbl"></span><span class="dsc"></span>';
+				b.querySelector('.lbl').textContent = role.label;
+				b.querySelector('.dsc').textContent = role.description || '';
+				b.onclick = function () { selected = role; apply(); paint(); };
+				box.appendChild(b);
+			});
+		}
+
+		apply();
+		paint();
+
+		document.getElementById('pp-login-form').addEventListener('submit', async function (e) {
+			e.preventDefault();
+			err.textContent = '';
+			submitBtn.disabled = true;
+			try {
+				const res = await fetch('/api/method/login', {
+					method: 'POST',
+					headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
+					credentials: 'same-origin',
+					body: JSON.stringify({usr: email.value, pwd: password.value})
+				});
+				const data = await res.json();
+				if (!res.ok || data.exc) {
+					let msg = 'Login failed';
+					try {
+						if (data._server_messages) {
+							msg = JSON.parse(JSON.parse(data._server_messages)[0]).message || msg;
+						} else if (typeof data.message === 'string') {
+							msg = data.message;
+						}
+					} catch (_) {}
+					err.textContent = msg;
+					submitBtn.disabled = false;
+					return;
+				}
+				window.location.href = selected.home || '/desk/peoplepay360';
+			} catch (ex) {
+				err.textContent = ex.message || 'Login failed';
+				submitBtn.disabled = false;
+			}
+		});
+	})();
+	</script>
+</body>
+</html>

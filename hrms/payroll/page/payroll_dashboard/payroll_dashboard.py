@@ -17,7 +17,7 @@ def get_payroll_dashboard_data(from_date: str, to_date: str, company: str | None
 	employee_scope_filter = {"employee": ["in", filtered_employee_names]} if employee_filter else {}
 	slips = frappe.get_list("Salary Slip", filters={"docstatus": 1, "posting_date": ["between", [from_date, to_date]], **company_filter, **employee_scope_filter}, fields=["name", "employee", "employee_name", "net_pay", "posting_date", "currency", "status"], limit_page_length=0)
 	entries = frappe.get_list("Payroll Entry", filters={"posting_date": ["between", [from_date, to_date]], **company_filter}, fields=["name", "status", "number_of_employees", "company"], limit_page_length=0)
-	attendance = frappe.get_list("Attendance", filters={"attendance_date": ["between", [from_date, to_date]], **company_filter, **employee_scope_filter}, fields=["employee", "status", "working_hours", "late_entry", "early_exit"], limit_page_length=0)
+	attendance = frappe.get_list("Attendance", filters={"attendance_date": ["between", [from_date, to_date]], **company_filter, **employee_scope_filter}, fields=["employee", "status", "working_hours", "late_entry", "early_exit", "in_time", "out_time", "modified", "creation"], limit_page_length=0)
 	active_employees = frappe.get_list("Employee", filters={"status": "Active", **employee_filter}, fields=["name", "employee_name", "department", "designation", "bank_ac_no", "company_email"], limit_page_length=0)
 	leaves = frappe.get_list("Leave Application", filters={"from_date": ["<=", to_date], "to_date": [">=", from_date], **company_filter}, fields=["employee", "employee_name", "leave_type", "total_leave_days", "status"], limit_page_length=0)
 	trend = defaultdict(float)
@@ -41,7 +41,15 @@ def get_payroll_dashboard_data(from_date: str, to_date: str, company: str | None
 		"salary_by_department": [{"department": name, "value": value} for name, value in sorted(department_cost.items(), key=lambda item: item[1], reverse=True)],
 		"department_breakdown": [{"department": name, "headcount": department_headcount[name], "salary": department_cost.get(name, 0)} for name in sorted(set(department_headcount) | set(department_cost))],
 		"status_breakdown": dict(status_breakdown),
-		"attendance": {"breakdown": dict(attendance_breakdown), "late": sum(1 for row in attendance if row.late_entry), "early_exit": sum(1 for row in attendance if row.early_exit), "overtime": sum(max(float(row.working_hours or 0) - 8, 0) for row in attendance), "coverage": round(len(attendance) / max(len(active_employees), 1) * 100, 1)},
+		"attendance": {
+			"breakdown": dict(attendance_breakdown),
+			"late": sum(1 for row in attendance if row.late_entry),
+			"early_exit": sum(1 for row in attendance if row.early_exit),
+			"missing_checkout": sum(1 for row in attendance if row.in_time and not row.out_time),
+			"manual_edits": sum(1 for row in attendance if row.modified and row.creation and row.modified != row.creation),
+			"overtime": sum(max(float(row.working_hours or 0) - 8, 0) for row in attendance),
+			"coverage": round(len(attendance) / max(len(active_employees), 1) * 100, 1),
+		},
 		"time_off": {"approved_days": approved_leave_days, "pending_requests": pending_leave, "leave_balances": get_leave_balances(company_filter)},
 		"employee_pay": [{"employee": employee, "employee_name": slip.employee_name, "department": frappe.db.get_value("Employee", employee, "department") or _("Unassigned"), "net_pay": slip.net_pay, "currency": slip.currency, "status": slip.status or "Paid"} for employee, slip in sorted(employee_pay.items(), key=lambda item: item[1].net_pay or 0, reverse=True)],
 		"warnings": {"queued_payruns": status_breakdown.get("Queued", 0), "failed_payruns": status_breakdown.get("Failed", 0), "unmarked_attendance": attendance_breakdown.get("Unmarked", 0), "duplicate_payslips": sum(1 for count in duplicate_counts.values() if count > 1), "contract_attention": get_contract_attention(active_employees), "missing_employee_info": sum(1 for employee in active_employees if not employee.bank_ac_no or not employee.company_email)},

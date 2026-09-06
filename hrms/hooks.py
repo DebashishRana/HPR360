@@ -27,15 +27,23 @@ add_to_apps_screen = [
 # app_include_css = "/assets/hrms/css/hrms.css"
 app_include_js = [
 	"/assets/hrms/js/peoplepay360_landing.js",
+	"/assets/hrms/js/peoplepay360_ui.js",
+	"/assets/hrms/js/peoplepay360_chat.js",
 	"hrms.bundle.js",
 ]
-app_include_css = ["hrms.bundle.css", "/assets/hrms/css/employee_master.css", "/assets/hrms/css/employment_contract.css", "/assets/hrms/css/employee_profile.css"]
+app_include_css = [
+	"hrms.bundle.css",
+	"/assets/hrms/css/employee_master.css",
+	"/assets/hrms/css/employment_contract.css",
+	"/assets/hrms/css/employee_profile.css",
+	"/assets/hrms/css/peoplepay360_chat.css",
+]
 
 # website
 
 # include js, css files in header of web template
 # web_include_css = "/assets/hrms/css/hrms.css"
-# web_include_js = "/assets/hrms/js/hrms.js"
+web_include_js = ["/assets/hrms/js/peoplepay360_login_inject.js"]
 
 # include custom scss in every website theme (without file extension ".scss")
 # website_theme_scss = "hrms/public/scss/website"
@@ -90,6 +98,12 @@ website_generators = ["Job Opening"]
 website_route_rules = [
 	{"from_route": "/hrms/<path:app_path>", "to_route": "hrms"},
 	{"from_route": "/hr/<path:app_path>", "to_route": "roster"},
+	{"from_route": "/pp-login", "to_route": "peoplepay360_login"},
+]
+
+# Make default Frappe /login land on the PeoplePay360 role picker
+website_redirects = [
+	{"source": "/login", "target": "/peoplepay360_login"},
 ]
 # Jinja
 # ----------
@@ -110,6 +124,7 @@ after_migrate = [
 	"hrms.setup.update_select_perm_after_install",
 	"hrms.setup.rename_hr_setup_to_employees",
 	"hrms.setup.remove_recruitment_navigation",
+	"hrms.peoplepay360.roles.apply_peoplepay360_role_permissions",
 ]
 
 setup_wizard_requires = "assets/hrms/js/setup_wizard.js"

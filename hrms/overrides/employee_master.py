@@ -203,4 +203,41 @@ def get_retirement_date(date_of_birth: str | None = None):
 			return dt.strftime("%Y-%m-%d")
 		except ValueError:
 			# invalid date
-			return
+			return None
+
+
+EMPLOYEE_KANBAN_COLUMNS = [
+	{"column_name": "Active", "indicator": "Green"},
+	{"column_name": "Inactive", "indicator": "Gray"},
+	{"column_name": "Suspended", "indicator": "Orange"},
+	{"column_name": "Left", "indicator": "Red"},
+]
+
+
+@frappe.whitelist()
+def create_employee_kanban_board(board_name: str | None = None) -> dict:
+	"""Create (or return) the PeoplePay360 Employee Status kanban board."""
+	import json
+
+	frappe.has_permission("Employee", "read", throw=True)
+	board_name = board_name or "Employee Status"
+
+	if frappe.db.exists("Kanban Board", board_name):
+		return frappe.get_doc("Kanban Board", board_name).as_dict()
+
+	board = frappe.new_doc("Kanban Board")
+	board.kanban_board_name = board_name
+	board.reference_doctype = "Employee"
+	board.field_name = "status"
+	board.private = 0
+	board.fields = json.dumps(["department", "designation", "reports_to", "company"])
+	board.show_labels = 1
+
+	for col in EMPLOYEE_KANBAN_COLUMNS:
+		board.append(
+			"columns",
+			{"column_name": col["column_name"], "indicator": col.get("indicator", ""), "status": "Active"},
+		)
+
+	board.insert(ignore_permissions=True)
+	return board.as_dict()

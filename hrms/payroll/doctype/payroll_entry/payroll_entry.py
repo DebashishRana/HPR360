@@ -3,6 +3,7 @@
 
 import datetime
 import json
+from collections import Counter
 
 from dateutil.relativedelta import relativedelta
 
@@ -1879,7 +1880,21 @@ def get_payrun_processing_data(payroll_entry: str) -> dict:
 	salary_slips = frappe.get_all(
 		"Salary Slip",
 		filters={"payroll_entry": entry.name},
-		fields=["name", "docstatus", "employee", "employee_name", "net_pay"],
+		fields=[
+			"name",
+			"docstatus",
+			"employee",
+			"employee_name",
+			"net_pay",
+			"gross_pay",
+			"total_deduction",
+			"status",
+			"salary_structure",
+			"start_date",
+			"end_date",
+			"payment_days",
+			"currency",
+		],
 		order_by="employee asc",
 	)
 	bank_entries = frappe.get_all(
@@ -1889,14 +1904,70 @@ def get_payrun_processing_data(payroll_entry: str) -> dict:
 		distinct=True,
 	)
 
+	warnings = []
+	employees_without_slip = {
+		row.employee for row in entry.employees
+	} - {slip.employee for slip in salary_slips}
+	for employee in sorted(employees_without_slip):
+		warnings.append(
+			{
+				"code": "MISSING_SALARY_SLIP",
+				"severity": "Review",
+				"employee": employee,
+				"message": _("Salary slip has not been generated yet."),
+			}
+		)
+
+	for slip in salary_slips:
+		employee = frappe.db.get_value(
+			"Employee",
+			slip.employee,
+			["bank_ac_no", "bank_name", "company_email", "personal_email"],
+			as_dict=True,
+		) or frappe._dict()
+		if not employee.bank_ac_no and not employee.bank_name:
+			warnings.append(
+				{
+					"code": "MISSING_BANK_DETAILS",
+					"severity": "Review",
+					"employee": slip.employee,
+					"message": _("Missing bank details for {0}.").format(slip.employee_name),
+					"document": slip.name,
+				}
+			)
+		if not (employee.company_email or employee.personal_email):
+			warnings.append(
+				{
+					"code": "MISSING_EMAIL",
+					"severity": "Review",
+					"employee": slip.employee,
+					"message": _("Missing email for {0}.").format(slip.employee_name),
+					"document": slip.name,
+				}
+			)
+
+	duplicate_counts = Counter(slip.employee for slip in salary_slips)
+	for employee, count in duplicate_counts.items():
+		if count > 1:
+			warnings.append(
+				{
+					"code": "DUPLICATE_SALARY_SLIP",
+					"severity": "Blocking",
+					"employee": employee,
+					"message": _("Employee has {0} salary slips in this payrun.").format(count),
+				}
+			)
+
 	return {
 		"payroll_entry": entry.as_dict(no_nulls=True),
 		"salary_slips": salary_slips,
+		"warnings": warnings,
 		"counts": {
 			"employees": len(entry.employees),
 			"salary_slips": len(salary_slips),
 			"submitted_salary_slips": sum(slip.docstatus == 1 for slip in salary_slips),
 			"bank_entries": len(bank_entries),
+			"warnings": len(warnings),
 		},
 		"bank_entries": bank_entries,
 	}

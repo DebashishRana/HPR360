@@ -9,6 +9,8 @@
  "engine": "InnoDB",
  "field_order": [
   "leave_type_name",
+  "leave_unit",
+  "requires_allocation",
   "is_compensatory",
   "is_lwp",
   "is_ppl",
@@ -52,6 +54,24 @@
    "oldfieldtype": "Data",
    "reqd": 1,
    "unique": 1
+  },
+  {
+   "default": "Days",
+   "fieldname": "leave_unit",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Unit",
+   "options": "Days\nHours",
+   "description": "Whether balances and requests are tracked in days or hours"
+  },
+  {
+   "default": "1",
+   "fieldname": "requires_allocation",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Requires Allocation",
+   "description": "Approved requests deduct from an allocation balance"
   },
   {
    "fieldname": "max_leaves_allowed",

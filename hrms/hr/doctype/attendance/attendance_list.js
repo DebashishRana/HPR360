@@ -1,5 +1,5 @@
 frappe.listview_settings["Attendance"] = {
-	add_fields: ["status", "attendance_date"],
+	add_fields: ["status", "attendance_date", "in_time", "out_time", "working_hours", "late_entry", "early_exit"],
 
 	get_indicator: function (doc) {
 		if (["Present", "Work From Home"].includes(doc.status)) {
@@ -9,6 +9,17 @@ frappe.listview_settings["Attendance"] = {
 		} else if (doc.status == "Half Day") {
 			return [__(doc.status), "orange", "status,=," + doc.status];
 		}
+	},
+	formatters: {
+		in_time(value) {
+			return value ? frappe.datetime.str_to_user(value) : "<span class='text-muted'>—</span>";
+		},
+		out_time(value) {
+			return value ? frappe.datetime.str_to_user(value) : "<span class='text-muted'>—</span>";
+		},
+		working_hours(value) {
+			return value != null ? Number(value).toFixed(2) : "<span class='text-muted'>—</span>";
+		},
 	},
 	onload: function (list_view) {
 		let me = this;

@@ -218,6 +218,55 @@ frappe.ui.form.on("Salary Slip", {
 		frm.fields_dict["earnings"].grid.set_column_disp(salary_detail_fields, false);
 		frm.fields_dict["deductions"].grid.set_column_disp(salary_detail_fields, false);
 		frm.trigger("set_dynamic_labels");
+		frm.trigger("show_payslip_computation_summary");
+
+		if (!frm.is_new() && frm.doc.docstatus < 2) {
+			frm.add_custom_button(__("Print Payslip"), () => {
+				frm.print_doc();
+			}, __("Actions"));
+		}
+		if (frm.doc.payroll_entry) {
+			frm.add_custom_button(__("Open Payrun"), () => {
+				frappe.set_route("payrun-processing", frm.doc.payroll_entry);
+			}, __("Actions"));
+		}
+	},
+
+	show_payslip_computation_summary: function (frm) {
+		if (frm.is_new() || !frm.doc.employee || !frm.doc.start_date || !frm.doc.end_date) return;
+
+		const earnings = (frm.doc.earnings || []).reduce((sum, row) => sum + flt(row.amount), 0);
+		const deductions = (frm.doc.deductions || []).reduce((sum, row) => sum + flt(row.amount), 0);
+		const lines = [
+			`<div><strong>${__("Salary Structure")}:</strong> ${frappe.utils.escape_html(frm.doc.salary_structure || "—")}</div>`,
+			`<div><strong>${__("Payrun")}:</strong> ${frappe.utils.escape_html(frm.doc.payroll_entry || "—")}</div>`,
+			`<div><strong>${__("Period")}:</strong> ${frappe.utils.escape_html(frm.doc.start_date)} → ${frappe.utils.escape_html(frm.doc.end_date)}</div>`,
+			`<div><strong>${__("Payment Days")}:</strong> ${flt(frm.doc.payment_days)}</div>`,
+			`<div><strong>${__("Gross / Deductions / Net")}:</strong> ${format_currency(earnings, frm.doc.currency)} / ${format_currency(deductions, frm.doc.currency)} / ${format_currency(frm.doc.net_pay, frm.doc.currency)}</div>`,
+		];
+
+		frappe.call({
+			method: "hrms.hr.doctype.employment_contract.employment_contract.get_contract_for_period",
+			args: {
+				employee: frm.doc.employee,
+				start_date: frm.doc.start_date,
+				end_date: frm.doc.end_date,
+			},
+		}).then((r) => {
+			const contract = r.message;
+			if (contract) {
+				lines.splice(
+					1,
+					0,
+					`<div><strong>${__("Period Contract")}:</strong> <a href="/app/employment-contract/${encodeURIComponent(contract.name)}">${frappe.utils.escape_html(contract.name)}</a> · ${format_currency(contract.wage, contract.currency || frm.doc.currency)}</div>`,
+				);
+			} else {
+				lines.splice(1, 0, `<div class="text-muted">${__("No employment contract covers this payslip period.")}</div>`);
+			}
+			frm.dashboard.add_section(lines.join(""), __("Salary Computation"));
+		}).catch(() => {
+			frm.dashboard.add_section(lines.join(""), __("Salary Computation"));
+		});
 	},
 
 	salary_slip_based_on_timesheet: function (frm) {
